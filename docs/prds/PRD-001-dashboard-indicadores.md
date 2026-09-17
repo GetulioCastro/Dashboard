@@ -4,7 +4,7 @@
 **Tipo:** Epic
 **Autor:** Agente IA (leanwork-start)
 **Data:** 2026-09-16
-**Status:** Rascunho — revisão 1 (gate de negócio aprovada em 2026-09-16)
+**Status:** Rascunho — revisão 2 (T-02 fechado documentalmente em 2026-09-17; revisão 1: gate de negócio aprovada em 2026-09-16)
 
 > **Nota de revisão (gate de negócio 2026-09-16):**
 > - **Fonte única de dados:** banco do novo SisacHTML5 (ADR-008). O legado VCL/Delphi é somente fonte de conhecimento, engenharia reversa e referência histórica — não é consultado em runtime e não é contrato de dados.
@@ -13,6 +13,10 @@
 > - **Reclassificados para backlog (fora do MVP):** Internações, Cirurgias, Ocupação, Glosas, Convênios como indicador independente, Unidade como dimensão/filtro.
 > - **Histórico:** o histórico de 2025 e anos anteriores existente no banco novo será usado para homologação e demonstração.
 > - RNs e CAs anteriores relativos a Ocupação/Glosas/Convênios foram **arquivados** (ver Apêndice B) — preservando rastreabilidade.
+
+> **Nota de revisão (revisão 2 — fechamento documental T-02, 2026-09-17):**
+> - **Premissa de banco:** o banco SQL padrão instalado para o SisacHTML5 é **essencialmente o mesmo banco utilizado pelo SghProg** (poucas mudanças/exclusões de colunas; estrutura, tabelas e organização no padrão do SghProg). O SghProg permanece **fonte estrutural válida de engenharia reversa**; estruturas conhecidas **não são descartadas automaticamente**; as diferenças vs. o SisacHTML5 serão confirmadas no T-03 e tratadas como **evidência de evolução do modelo**. Continua **vedado copiar regras de negócio do SghProg** (ADR-007/ADR-008).
+> - **Decisões T-02 incorporadas:** **Produção Médica** — medida do quanto o profissional produziu no período, comparável entre profissionais, não presumida como apenas consultas (unidade técnica no T-03); **Conta a faturar** — contas de pacientes de convênio com alta e faturamento incompleto, com fluxo conceitual Atendimento→Alta→Processo→Envio/auditoria→Faturamento completo (representação física no T-03); **Despesas** — composição de fixas/variáveis registrada, com repasse médico classificado conforme a natureza contratual (representação física no T-03); **Consulta × Retorno** — conceitos distintos, retorno associado à consulta, agendado ou não, no prazo de até 30 dias da consulta (identificação técnica no T-03); **Período** — atual como período calendário corrente; futuros consultáveis; sem dados futuros = estado informativo, não previsão; **Cobertura SUS** — identificação técnica no T-03.
 
 ---
 
@@ -149,7 +153,7 @@ flowchart TD
 - **RN-01:** Todos os indicadores são calculados por consulta direta ao **banco do novo SisacHTML5** (única fonte operacional — ADR-008), sem persistência intermediária (ADR-004).
 - **RN-02:** O acesso ao banco é exclusivamente **leitura** (ADR-003 — alvo revisado para o banco novo); nenhuma operação de escrita é permitida.
 - **RN-03:** Indicadores sem dados para o período/cobertura selecionado exibem "Nenhum dado encontrado" em vez de valor zero ou vazio.
-- **RN-04:** O período padrão de exibição é o mês corrente. O usuário pode selecionar: **período atual**; **período passado** com data inicial e data final; **período futuro** com data inicial e data final.
+- **RN-04:** O período padrão de exibição é o mês corrente. O usuário pode selecionar: **período atual**; **período passado** com data inicial e data final; **período futuro** com data inicial e data final. O período **atual** pode ter como referência o **período calendário corrente**; **períodos futuros são consultáveis**; quando não houver dados (inclusive futuros), o sistema apresenta **estado informativo/sem dados** (RN-03) — a ausência de dados futuros **não é transformada em previsão** (decidido em T-02 — 2026-09-17).
 - **RN-05:** Valores monetários são exibidos em R$ (Real brasileiro) com separador de milhar e duas casas decimais.
 - **RN-06:** Percentuais são exibidos com uma casa decimal.
 
@@ -161,7 +165,7 @@ flowchart TD
 
 ### Indicador — Consultas
 
-- **RN-28:** O indicador de Consultas mostra a quantidade de consultas realizadas no período selecionado, podendo distinguir primeira consulta e retorno conforme definição do produto (a confirmar).
+- **RN-28:** O indicador de Consultas mostra a quantidade de consultas realizadas no período selecionado. **Consulta** é o atendimento realizado pelo profissional de saúde a um paciente. **Retorno** é a consulta associada a uma consulta anterior, podendo ter sido previamente agendada ou não, desde que ocorra dentro do prazo de **até 30 dias** contados da data da consulta. Consulta e Retorno são **conceitos distintos** para o negócio; a forma técnica de identificá-los no banco do SisacHTML5 será confirmada no T-03 (não se assume código específico) (decidido em T-02 — 2026-09-17).
 - **RN-30:** A relação entre Atendimento, Consulta e Exame será definida pelo **modelo de dados do novo SisacHTML5** (categorias de atendimento e/ou itens) e validada antes da implementação — **não** se presume hierarquia ou filiação.
 
 ### Indicador — Exames
@@ -175,14 +179,14 @@ flowchart TD
 - **RN-11:** O Faturamento pode ser analisado por convênio cadastrado no novo SisacHTML5.
 - **RN-12:** O valor é calculado a partir dos registros de faturamento (guia/conta de atendimento, não recebimento).
 - **RN-13:** O período de referência é a data de emissão da guia/conta.
-- **RN-31:** O Dashboard deve distinguir **contas faturadas** e **contas a faturar**.
+- **RN-31:** O Dashboard deve distinguir **contas faturadas** e **contas a faturar**. **Conta a faturar** corresponde a contas de pacientes atendidos por Convênio que receberam **alta** e que ainda **não foram completamente faturadas**; dependendo da data e do processo de envio das contas faturadas para auditoria e pagamento do Convênio, essas contas podem permanecer arquivadas em movimento próprio até o faturamento completo (decidido em T-02 — 2026-09-17).
 - **RN-32:** O Faturamento deve permitir análise comparativa entre **período anterior** e **período atual**.
-- **RN-33:** Os estados específicos do novo banco, a definição definitiva de "emissão" e a fórmula de "contas a faturar" serão definidos a partir do modelo do novo SisacHTML5 (regras em Core). O legado fornece evidências históricas, mas **não constitui contrato** para o novo banco.
+- **RN-33:** Os estados específicos do novo banco, a definição definitiva de "emissão" e a fórmula de "contas a faturar" serão definidos a partir do modelo do novo SisacHTML5 (regras em Core). O legado fornece evidências históricas, mas **não constitui contrato** para o novo banco. **Fluxo conceitual registrado (T-02):** Atendimento por Convênio → Alta do paciente → Conta em processo de faturamento → Envio/auditoria → Faturamento completo. Estados ou códigos do SghProg **não são reutilizados automaticamente** como contrato; no T-03 será identificado como o banco padrão do SisacHTML5 representa esse processo.
 
 ### Indicador — Produção Médica
 
 - **RN-14:** O indicador de Produção Médica mostra a produtividade da produção dos profissionais de saúde no período selecionado.
-- **RN-16:** O cálculo base é uma medida de atendimentos/produção por **profissional ativo** no período (fórmula exata a formalizar — ver questões em aberto).
+- **RN-16:** **Produtividade médica** é a medida do quanto o profissional de saúde produziu dentro de determinado período, permitindo **comparar profissionais**. A produção **não** é presumida como apenas quantidade de consultas — consultas, exames solicitados e outras produções efetivamente registradas podem compor a produtividade. A definição técnica de quais registros constituem a **unidade de produção** será confirmada no contrato de dados (T-03), observando o modelo efetivamente disponível no SisacHTML5; **não se inventa fórmula matemática** (decidido em T-02 — 2026-09-17).
 - **RN-34:** A Produção Médica deve considerar a produtividade por **profissional ativo**.
 - **RN-35:** A Produção Médica deve permitir análise **individual/profissional** segundo a categoria de cobertura: Particular, Convênio, SUS (RN-26).
 - **RN-36:** A Produção Médica deve permitir análise por **categoria do serviço de saúde**: Particular, Convênio, SUS (RN-26).
@@ -190,9 +194,10 @@ flowchart TD
 
 ### Indicador — Despesas
 
-- **RN-37:** O indicador de Despesas mostra as **despesas fixas** do período selecionado.
-- **RN-38:** O indicador de Despesas mostra as **despesas variáveis** do período selecionado.
+- **RN-37:** O indicador de Despesas mostra as **despesas fixas** do período selecionado. Composição registrada (T-02): **energia, água, aluguel, condomínio, salários** e **repasses médicos com datas de vencimento previstas em contrato**.
+- **RN-38:** O indicador de Despesas mostra as **despesas variáveis** do período selecionado. Composição registrada (T-02): **compras de equipamentos, móveis, utensílios necessários para determinado local de atendimento** e **repasse médico conforme contrato**.
 - **RN-39:** A visualização deve permitir **comparação gráfica** entre despesas fixas e variáveis.
+- **Nota (T-02):** o **repasse médico pode aparecer como despesa fixa ou variável dependendo da natureza contratual** — **não** se classifica automaticamente toda despesa de repasse médico em uma única categoria; a representação dessa classificação no banco do SisacHTML5 será investigada no T-03 (decidido em T-02 — 2026-09-17).
 
 ### Indicador — Repasses (roadmap — bloqueado no MVP)
 
@@ -370,6 +375,7 @@ Referência: `docs/architecture/proposta-arquitetural.md` (ADR-001, ADR-003 revi
 - **Restrição:** Sem Application Layer, CQRS, Mediator ou camadas adicionais; sem migrations do dashboard (ADR-001).
 - **Premissa:** O histórico de 2025 e anteriores já estará disponível no banco novo para homologação/demonstração.
 - **Premissa:** A modelagem do novo banco (domínios, estados, categorias) será definida pelo SisacHTML5 e validada antes da implementação (T-03 e T-02 do PLAN-001).
+- **Premissa (T-02):** o banco SQL padrão instalado para o SisacHTML5 é **essencialmente o mesmo banco utilizado pelo SghProg** (pequenas mudanças/exclusões de colunas; estrutura geral no padrão do SghProg). Sob essa premissa, o SghProg permanece **fonte estrutural válida de engenharia reversa** e **não se descartam automaticamente** tabelas/campos/estruturas conhecidas; as diferenças vs. o banco do SisacHTML5 serão confirmadas no **T-03** e tratadas como **evidência de evolução do modelo**. **Regras de negócio não são copiadas do SghProg** (ADR-007 / ADR-008).
 - **Premissa:** "Unidade" não é filtro do MVP (RN-45). "Repasses" não é implementado no MVP (RN-40).
 
 ## 15. Riscos e dependências
@@ -384,16 +390,18 @@ Referência: `docs/architecture/proposta-arquitetural.md` (ADR-001, ADR-003 revi
 
 ## 16. Questões em aberto (MVP)
 
+> **Nota (revisão 2 — fechamento documental T-02, 2026-09-17):** as questões Q2–Q6 e Q10 tiveram a **decisão de negócio registrada** neste documento (Capítulos 8–12, Nota de revisão e RNs). Permanece em aberto apenas a **identificação técnica** correspondente, a responder no **T-03** a partir do banco padrão do SisacHTML5 (comparado ao SghProg).
+
 - [ ] Q1: Qual o contrato de dados (entidades/atributos mínimos) que o banco do novo SisacHTML5 deve expor para os seis indicadores? — *responsável: produto + modelo do SisacHTML5 (T-03)*
-- [ ] Q2: Como o novo banco modela Atendimento, Consulta e Exame (categorias de uma movimentação vs itens)? — *responsável: produto (T-03/T-02)*
-- [ ] Q3: Definição exata de produtividade, de "profissional ativo", papel considerado e métrica da Produção Médica; fonte da especialidade (quando necessária) — *responsável: Analista de Management + produto (T-02)*
-- [ ] Q4: Estados de faturamento no novo banco ("faturada"/"a faturar"), definição de "emissão" e fórmula de contas a faturar — *responsável: produto (T-02)*
-- [ ] Q5: Composição das Despesas: grupos fixa/variável, categorias, data de referência (competência vs pagamento) e origem no novo banco — *responsável: produto/time de negócio (T-02)*
-- [ ] Q6: Granularidade e regras do filtro por período (meses/dias), e comportamento com períodos futuros — *responsável: produto (T-02)*
+- [ ] Q2 (negócio decidida em T-02): Como o novo banco modela Atendimento, Consulta e Exame (categorias de uma movimentação vs itens)? Consulta e Retorno são conceitos distintos; retorno associado à consulta, agendado ou não, dentro de até 30 dias (RN-28). Entidades físicas de Consulta, Retorno e Exame e a identificação dos tipos assistenciais — *identificação técnica: T-03*
+- [ ] Q3 (negócio decidida em T-02): Definição exata de produtividade, de "profissional ativo", papel considerado e métrica da Produção Médica; fonte da especialidade (quando necessária). Produtividade = produção do profissional no período, comparável entre profissionais, não presumida como apenas consultas (RN-16). Unidade de produção médica, identificação de profissional ativo e papéis profissionais — *identificação técnica: T-03*
+- [ ] Q4 (negócio decidida em T-02): Estados de faturamento no novo banco ("faturada"/"a faturar"), definição de "emissão" e fórmula de contas a faturar. Conta a faturar = contas de convênio com alta e faturamento incompleto; fluxo Atendimento → Alta → Conta em processo → Envio/auditoria → Faturamento completo (RN-31/RN-33). Estados de conta, campo/evento de emissão/envio e estrutura de movimentos de faturamento — *identificação técnica: T-03*
+- [ ] Q5 (negócio decidida em T-02): Composição das Despesas: grupos fixa/variável, categorias, data de referência (competência vs pagamento) e origem no novo banco. Composição registrada em RN-37/RN-38; repasse médico conforme natureza contratual (Nota T-02 em Despesas). Origem, classificação e data de referência das despesas — *identificação técnica: T-03*
+- [ ] Q6 (negócio decidida em T-02): Granularidade e regras do filtro por período (meses/dias), e comportamento com períodos futuros. Atual = período calendário corrente; futuros consultáveis; ausência de dados futuros = estado informativo, não previsão (RN-04). Calibração das consultas de período (validar desempenho de períodos grandes) — *identificação técnica: T-03*
 - [ ] Q7: Repasses — regra e modelo, quando o produto demandar — *roadmap (sem tarefa no MVP)*
 - [ ] Q8: Unidade como dimensão/filtro — *evolução futura (RN-45)*
 - [ ] Q9: Autenticação/autorização — *fora do escopo atual*
-- [ ] Q10: Como será identificada a cobertura SUS no novo modelo (somente quando o serviço atender SUS)? — *responsável: produto (T-03)*
+- [ ] Q10 (negócio decidida em T-02): Como será identificada a cobertura SUS no novo modelo (somente quando o serviço atender SUS)? Identificação técnica de Particular/Convênio/SUS e do atendimento SUS via cadastro/configuração do serviço — *identificação técnica: T-03*
 
 ## 17. Referências
 
@@ -414,6 +422,7 @@ Referência: `docs/architecture/proposta-arquitetural.md` (ADR-001, ADR-003 revi
 |------|--------|-------|-----------|
 | 2026-09-16 | 0.1 | Agente IA | Versão original (escopo com 6 indicadores do legado) |
 | 2026-09-16 | 1.0 | Agente IA + gate humana | **Gate de negócio aprovada**: fonte única = banco do novo SisacHTML5 (ADR-008); MVP com 6 indicadores implementáveis (Atendimentos, Consultas, Exames, Faturamento, Produção Médica, Despesas); Repasses em roadmap; Unidade futura; coberturas Particular/Convênio/SUS; gráficos configuráveis; períodos atual/passado/futuro; tratamento de consultas lentas; homologação com histórico 2025+ |
+| 2026-09-17 | 2.0 | Agente IA + gate humana | **Fechamento documental T-02**: decisões de negócio registradas (Produtividade Médica — RN-16; Conta a faturar e fluxo — RN-31/RN-33; composição de Despesas — RN-37/RN-38 e nota de repasse médico; Consulta × Retorno ≤ 30 dias — RN-28; Período atual/futuro — RN-04); **premissa de banco** registrada (SisacHTML5 ≈ SghProg — ADR-008); questões Q2–Q6 e Q10 marcadas como "negócio decidida"; **identificação técnica remetida ao T-03** |
 
 ## Apêndice B — RNs e CAs arquivados (backlog — fora do MVP)
 

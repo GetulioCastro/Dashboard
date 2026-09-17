@@ -12,6 +12,12 @@ build/
 .cache/
 coverage/
 
+# OpenCode
+.opencode
+
+# Credenciais locais (connection strings nunca versionadas)
+appsettings.*.local.json
+
 # VSCode
 .vscode/
 !.vscode/settings.json

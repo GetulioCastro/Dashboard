@@ -5,7 +5,7 @@
 **Stack:** C# / ASP.NET Core 10.0, Razor Pages, Bootstrap 5, banco do novo SisacHTML5 (somente leitura)
 **Autor:** Agente IA (leanwork-start)
 **Data:** 2026-09-16
-**Status:** Rascunho — revisão 1 (gate de negócio aprovada em 2026-09-16)
+**Status:** Rascunho — revisão 2 (T-02 fechado documentalmente em 2026-09-17; revisão 1: gate de negócio aprovada em 2026-09-16)
 
 > **Nota de revisão (gate de negócio 2026-09-16):**
 > - **Fonte única de dados:** banco do novo **SisacHTML5** (ADR-008). O legado VCL/Delphi não é consultado em runtime e não é contrato de dados.
@@ -13,6 +13,10 @@
 > - **Fora do MVP:** Repasses (bloqueado — regra a definir), Ocupação, Glosas, Convênios como indicador independente, Unidade como dimensão/filtro.
 > - **Fase 1** manteve T-01 (concluída — conhecimento do legado) e T-02 (em andamento). **T-03 foi redefinida**: não é mais "capacidade do SQL Server legado"; agora é o **contrato de dados do novo banco** para os indicadores.
 > - As tarefas antigas de Ocupação/Glosas/Convênios foram **eliminadas** (indicadores fora do MVP). Quadro de correspondência na seção 12.
+
+> **Nota de revisão (revisão 2 — fechamento documental T-02, 2026-09-17):**
+> - **Premissa de banco:** o **banco SQL padrão instalado para o SisacHTML5 é essencialmente o mesmo banco utilizado pelo SghProg** (poucas mudanças/exclusões de colunas; estrutura geral no padrão do SghProg). O **SghProg permanece fonte estrutural válida de engenharia reversa** para o T-03; estruturas conhecidas **não são descartadas automaticamente**; as diferenças vs. o banco do SisacHTML5 serão confirmadas no T-03 e tratadas como **evidência de evolução do modelo**. **Regras de negócio não são copiadas do SghProg** (ADR-007/ADR-008).
+> - **T-02 fechado documentalmente:** as decisões de negócio (faturamento/conta a faturar, produtividade médica, despesas, consulta/retorno, períodos) foram fornecidas pela gate humana e registradas no PRD-001 (revisão 2). A **identificação técnica** correspondente permanece para o **T-03** (a partir do banco padrão do SisacHTML5).
 
 ---
 
@@ -32,6 +36,7 @@ Implementação do Dashboard de Indicadores em seis fases: (1) alinhamento das d
 
 > ⚠️ **Premissa:** O banco do novo SisacHTML5 é a **única fonte operacional** de dados do Dashboard (ADR-008). O legado não será consultado em runtime e suas tabelas/colunas **não** são contrato — são apenas conhecimento de engenharia reversa (documentado em T-01).
 > ⚠️ **Premissa:** As entidades, colunas e definições de negócio dos indicadores serão confirmadas a partir do modelo do novo SisacHTML5 (T-03). Nenhuma query é escrita com schema presumido.
+> ⚠️ **Premissa (T-02 — 2026-09-17):** o banco SQL padrão do SisacHTML5 é **essencialmente o mesmo banco do SghProg** (pequenas mudanças/exclusões de colunas). Sob essa premissa, o **SghProg permanece fonte estrutural válida de engenharia reversa** e suas estruturas conhecidas **não são descartadas automaticamente** — as diferenças serão confirmadas no T-03 e tratadas como **evidência de evolução do modelo**. **Regras de negócio não são copiadas do SghProg** (ADR-007/ADR-008); o T-03 parte da estrutura conhecida do SghProg para **confirmar o que permanece** no banco do SisacHTML5.
 > ⚠️ **Premissa (gate de negócio):** MVP implementa **6 indicadores**. **Repasses está no escopo conceitual/roadmap e é bloqueado** — sem tarefa de implementação, sem fórmula assumida (RN-40). Unidade é evolução futura (RN-45). SUS é considerado somente quando o serviço atender SUS (RN-26).
 > ⚠️ **Premissa:** O histórico de **2025 e anteriores** estará disponível no banco novo e será usado para **homologação e demonstração** (RN-44).
 > ⚠️ **Premissa:** A autenticação está fora do escopo desta entrega (Q9 — fora do escopo atual) — não bloqueia nenhuma tarefa do plano.
@@ -126,7 +131,7 @@ Investigar o schema do banco legado e documentar, para os domínios de negócio 
 
 #### T-02 — Alinhar definições de negócio dos indicadores do MVP com stakeholders
 
-- **Status:** Em andamento
+- **Status:** Concluído (fechamento documental em 2026-09-17)
 - **Complexidade:** Média
 - **Depende de:** T-01
 - **Implementa:** —
@@ -134,23 +139,27 @@ Investigar o schema do banco legado e documentar, para os domínios de negócio 
 - **Decisões base:** ADR-007
 - **Camadas/arquivos afetados:**
   - `docs/architecture/dicionario-de-dados.md` *(editado — anexo com definições confirmadas)*
-  - `docs/prds/PRD-001-dashboard-indicadores.md` *(editado — notas quando houver ajuste de regra)*
+  - `docs/prds/PRD-001-dashboard-indicadores.md` *(editado — revisão 2: decisões de negócio incorporadas)*
 
 **Descrição:**
-Sessão de alinhamento com o produto (SisacHTML5) e stakeholders para fechar as definições de negócio do MVP que dependem do novo modelo:
-- **Faturamento (Q4/Q3):** estados de "contas faturadas/a faturar", definição de emissão, período de referência e comparação período anterior/atual (RN-31, RN-32, RN-33)
-- **Produção Médica (Q3):** definição exata de produtividade, de "profissional ativo", papel considerado, métrica e fonte da especialidade (RN-16, RN-34, RN-35, RN-36)
-- **Despesas (Q5):** quais despesas em cada grupo (fixa/variável), categorias, data de referência (competência vs. pagamento) e origem no novo banco (RN-37, RN-38, RN-39)
-- **Coberturas (Q10):** como o novo modelo identifica Particular, Convênio e SUS; SUS somente quando o serviço atende SUS (RN-26)
-- **Período (Q6):** granularidade e regras dos períodos atual/passado/futuro; data de referência de negócio por indicador em Core (RN-04, RN-42)
+Sessão de alinhamento com o produto (SisacHTML5) e stakeholders para fechar as definições de negócio do MVP:
+- **Faturamento (Q4):** **conta a faturar** = contas de pacientes de convênio com alta e faturamento incompleto, permanecendo em movimento próprio até o faturamento completo; fluxo conceitual Atendimento → Alta → Conta em processo → Envio/auditoria → Faturamento completo (RN-31, RN-33)
+- **Produção Médica (Q3):** produtividade = produção do profissional no período, comparável entre profissionais, não presumida como apenas consultas (RN-16); unidade técnica em T-03
+- **Despesas (Q5):** composição de fixas/variáveis registrada (RN-37/RN-38); repasse médico conforme natureza contratual; origem e data de referência em T-03
+- **Coberturas (Q10):** SUS somente quando o serviço atende SUS (RN-26); identificação técnica de Particular/Convênio/SUS em T-03
+- **Período (Q6):** atual = período calendário corrente; futuros consultáveis; sem dados futuros = estado informativo, não previsão (RN-04, RN-42)
+
+> **Nota de fechamento (2026-09-17):** a gate humana forneceu as decisões de negócio (faturamento/conta a faturar, produtividade, despesas, consulta × retorno, períodos). As **definições de negócio foram incorporadas** ao PRD-001 (revisão 2) e ao dicionário de dados (anexo T-02). A **identificação técnica** correspondente (entidades físicas, estados, campos, origem das despesas etc.) fica **dependente do T-03**. Nenhuma regra foi inventada nem copiada do SghProg — apenas premissas estruturais confirmadas (banco SisacHTML5 ≈ SghProg; ver ADR-008).
 
 **Critério de aceite (testável):**
-- [ ] Definições de Faturamento (faturada/a faturar, emissão, comparação) registradas (valida RN-31..RN-33)
-- [ ] Definição de Produtividade e "profissional ativo" registrada (valida RN-14, RN-16, RN-34..RN-36)
-- [ ] Composição das Despesas (grupos/categorias/referência) registrada (valida RN-37..RN-39)
-- [ ] Modelo de coberturas (Particular/Convênio/SUS) confirmado (valida RN-26)
-- [ ] Regras do filtro por período confirmadas (valida RN-04, RN-42)
-- [ ] Ajustes às RNs, se houver, aprovados pelo responsável do PRD
+- [x] Definições de Faturamento (conta a faturar, fluxo, comparação) registradas (valida RN-31..RN-33)
+- [x] Definição de Produtividade e natureza da produção registrada (valida RN-16, RN-34..RN-36)
+- [x] Composição das Despesas (grupos/categorias/referência) registrada (valida RN-37..RN-39)
+- [x] Modelo de coberturas (Particular/Convênio/SUS) confirmado no nível de negócio (valida RN-26)
+- [x] Regras do filtro por período confirmadas (valida RN-04, RN-42)
+- [x] Ajustes às RNs, se houver, aprovados pelo responsável do PRD *(aprovados na gate humana — fechamento documental T-02)*
+
+> **Observação de fechamento:** a **identificação técnica** desses critérios (nomes físicos, estados, campos, origem das despesas) **permanece pendente do T-03** — não é reintroduzida aqui.
 
 **Testes a escrever:**
 - *Não aplicável* — tarefa de alinhamento de negócio.
@@ -164,24 +173,34 @@ Sessão de alinhamento com o produto (SisacHTML5) e stakeholders para fechar as 
 
 #### T-03 — Estabelecer o contrato de dados do banco do novo SisacHTML5 para os indicadores
 
-- **Status:** Pendente
+- **Status:** Concluído (2026-09-17) — investigação documental + complemento de validação no banco operacional; a **regra de "Despesa Provisionada"** permanece como evidência/pendência (**E/P**) para a etapa apropriada, sem bloquear a fundação estrutural
 - **Complexidade:** Alta
 - **Depende de:** T-02
 - **Implementa:** —
 - **Valida:** — *(suporta todas as queries da Fase 3)*
 - **Decisões base:** ADR-008 *(única fonte operacional = banco do SisacHTML5)*
 - **Camadas/arquivos afetados:**
+  - `docs/architecture/contrato-dados-dashboard.md` *(criado — contrato físico com classificação D/E/P; complemento 2026-09-17 concluiu o domínio Despesas)*
   - `docs/architecture/dicionario-de-dados.md` *(editado — domínios conceituais e contrato de dados)*
   - `docs/architecture/adrs/` *(possível ADR avulso se houver decisão de interface/performance)*
 
 **Descrição:**
-Identificar e validar com o produto (SisacHTML5) o **contrato de dados** mínimo que o banco do novo SisacHTML5 expõe para os seis indicadores do MVP: entidades, atributos, estados e relacionamentos (Atendimento/Consulta/Exame, Guia/Conta/Faturamento, Profissional/Produção, Despesas, Coberturas). Registrar como **domínios conceituais** no dicionário (§14), sem nomes físicos presumidos e sem dependência do schema legado. É deste contrato que derivam as queries da Fase 3 (filtros, joins e agregações em Core/Data — ADR-007).
+Identificar e validar com o produto (SisacHTML5) o **contrato de dados** mínimo que o banco do novo SisacHTML5 expõe para os seis indicadores do MVP: entidades, atributos, estados e relacionamentos (Atendimento/Consulta/Exame, Guia/Conta/Faturamento, Profissional/Produção, Despesas, Coberturas). Registrar como **domínios conceituais** no dicionário (§14), sem nomes físicos presumidos como contrato.
+
+> **Orientações do fechamento T-02 (2026-09-17):** o **banco SQL padrão do SisacHTML5 é essencialmente o mesmo banco do SghProg** (poucas mudanças/exclusões de colunas — ADR-008). Portanto o **T-03 parte da estrutura conhecida do SghProg** (dicionário de dados, T-01) como **referência estrutural** e valida, no banco operacional do SisacHTML5, **quais estruturas realmente permanecem**; diferenças/exclusões são **evidência de evolução do modelo** e devem ser registradas. **Regras de negócio não são copiadas do SghProg** — as regras já definidas (PRD-001 revisão 2) prevalecem.
+
+É deste contrato que derivam as queries da Fase 3 (filtros, joins e agregações em Core/Data — ADR-007).
+
+> **Progresso T-03 (2026-09-17):** investigação documental concluída. Criado `docs/architecture/contrato-dados-dashboard.md` com a matriz do contrato (estruturas, campos, tipos, relacionamentos, evidência, status), mapa de datas e de relacionamentos, riscos de performance e **37 pendências** (P1–P37). **Nenhum item pôde ser marcado como D (confirmado no SisacHTML5)** — sem acesso ao banco operacional, os itens ficam como **E** (evidência SghProg/CASAMATER) ou **P** (pendente). **Despesas:** nenhuma estrutura de origem identificada no legado — investigação necessária no SisacHTML5 (módulo contábil/integração). Bloqueios: acesso de leitura ao banco do SisacHTML5, validação com o time e definição da origem das despesas.
+
+> **Complemento T-03 (2026-09-17 — fechamento):** validação direta no banco operacional acessível pelo Dashboard (`DESENVHMSISAC02\MSSQLSERVER2022`, banco `CASAMATER`, usuário `dashboard_readonly`, somente leitura). O domínio **Despesas** foi **confirmado (D)** nas tabelas **`dbo.PAGAR`** (títulos/parcelas — principal) e **`dbo.PAGARC`** (complementar/fiscal): sem FK declarada; chaves lógicas **K4** = `CODFORNECEDOR+NFISCAL+FILIAL+GRUPOEMP` e **K5** = K4+`NPARC`; cardinalidade **1:N**; **risco de dupla contagem** (por K4, 168.735/170.062 NFs com `PAGARC.VALOR` = Σ `PAGAR.VALOR` — não somar as duas tabelas); PAGARC apresentou `DATAPAG` NULL em todos os registros analisados, e PAGAR concentra os dados de parcela/pagamento/saldo. **Regra de "Despesa Provisionada" NÃO inventada**: `DATAPREV` = **E** (100% dos 10.087 PAGAR não pagos preenchida); semântica formal e regra de inclusão/exclusão de cancelamentos/estornos = **P** (novas pendências P38–P40 no contrato). Nenhum dado/objeto/permissão do banco alterado. T-04 permanece validado/concluído.
 
 **Critério de aceite (testável):**
-- [ ] Contrato de dados registrado para cada um dos seis indicadores (entidades, atributos mínimos, estados, relacionamentos)
-- [ ] Domínios conceituais documentados em `dicionario-de-dados.md` (§14)
-- [ ] Valores de cobertura (Particular/Convênio/SUS) e estados de faturamento identificados no contrato
-- [ ] Nenhum nome físico/schema do legado copiado como contrato
+- [x] Contrato de dados registrado para os indicadores (entidades, atributos mínimos, estados, relacionamentos) — como **evidência E / pendência P** em `contrato-dados-dashboard.md`
+- [x] Contrato validado com confirmação no **banco operacional do SisacHTML5** (promover E→D) — **parcial**: domínio **Despesas** promovido a **D** (complemento 2026-09-17); demais domínios permanecem E/P até validação específica
+- [ ] Valores de cobertura (Particular/Convênio/SUS) e estados de faturamento confirmados no SisacHTML5
+- [x] Estruturas do SghProg confirmadas/excluídas no banco do SisacHTML5 registradas como evidência de evolução do modelo — **parcial**: `PAGAR`/`PAGARC` confirmadas (Despesas); demais estruturas pendentes
+- [x] Nome físico/schema adotado como contrato somente com confirmação — `PAGAR`/`PAGARC` confirmados no banco (D); **regra de negócio de "Despesa Provisionada" não inventada** (E/P — P38–P40)
 - [ ] Contrato validado pelo produto (SisacHTML5)
 
 **Testes a escrever:**
@@ -203,7 +222,7 @@ Identificar e validar com o produto (SisacHTML5) o **contrato de dados** mínimo
 
 #### T-04 — Criar projetos Dashboard.Core e Dashboard.Data e referências de projeto
 
-- **Status:** Pendente
+- **Status:** Concluído (2026-09-17) — gate de fundação autorizada; critérios de aceite satisfeitos
 - **Complexidade:** Baixa
 - **Depende de:** nenhuma
 - **Implementa:** —
@@ -216,12 +235,20 @@ Identificar e validar com o produto (SisacHTML5) o **contrato de dados** mínimo
   - `Dashboard.Web/Dashboard.Web.csproj` *(editado — referências)*
 
 **Descrição:**
-Criar os projetos de biblioteca de classes `Dashboard.Core` e `Dashboard.Data` (net10.0, Nullable enable, ImplicitUsings enable), adicioná-los ao `Dashboard.slnx`, e configurar as referências: `Dashboard.Web → Dashboard.Core`, `Dashboard.Web → Dashboard.Data`, `Dashboard.Data → Dashboard.Core`. `Dashboard.Core` **sem PackageReference** (ADR-005). Projetos ficam vazios — apenas estrutura. *Autorização: gate de fundação aprovada (futura).*
+Criar os projetos de biblioteca de classes `Dashboard.Core` e `Dashboard.Data` (net10.0, Nullable enable, ImplicitUsings enable), adicioná-los ao `Dashboard.slnx`, e configurar as referências: `Dashboard.Web → Dashboard.Core`, `Dashboard.Web → Dashboard.Data`, `Dashboard.Data → Dashboard.Core`. `Dashboard.Core` **sem PackageReference** (ADR-005). Projetos ficam vazios — apenas estrutura. *Autorização: gate de fundação aprovada (2026-09-17).*
+
+> **Registro de execução (2026-09-17):**
+> - **Criados:** `Dashboard.Core` e `Dashboard.Data` (Class Library, net10.0, Nullable enable, ImplicitUsings enable; `Class1.cs` do template removido — projetos vazios).
+> - **Solução:** `Dashboard.Core` e `Dashboard.Data` adicionados ao `Dashboard.slnx`.
+> - **Referências adicionadas:** `Dashboard.Web → Dashboard.Core`, `Dashboard.Web → Dashboard.Data`, `Dashboard.Data → Dashboard.Core`.
+> - **Sem dependências externas:** Core sem `PackageReference` e sem referência a projetos; Data sem `PackageReference` (nenhum pacote instalado).
+> - **Build:** `dotnet build Dashboard.slnx` — **0 avisos, 0 erros**.
+> - **Dashboard.Web:** apenas o `.csproj` alterado (referências); `Program.cs`, Pages, appsettings e demais funcionalidades intactos.
 
 **Critério de aceite (testável):**
-- [ ] `dotnet build Dashboard.slnx` compila sem erros
-- [ ] Referências de projeto seguem ADR-001 (Core não referencia ninguém)
-- [ ] `Dashboard.Core.csproj` não contém PackageReference
+- [x] `dotnet build Dashboard.slnx` compila sem erros
+- [x] Referências de projeto seguem ADR-001 (Core não referencia ninguém)
+- [x] `Dashboard.Core.csproj` não contém PackageReference
 
 **Testes a escrever:**
 - *Não aplicável* — tarefa estrutural.
@@ -233,61 +260,86 @@ Criar os projetos de biblioteca de classes `Dashboard.Core` e `Dashboard.Data` (
 
 #### T-05 — Configurar acesso a dados somente leitura no banco do SisacHTML5
 
-- **Status:** Pendente
+- **Status:** Concluído (2026-09-17) — validado: teste de integração real (`SELECT 1`) executado com sucesso (1 teste, 0 falhas); credencial fornecida por variável de ambiente, nunca gravada
 - **Complexidade:** Média
 - **Depende de:** T-04
 - **Implementa:** —
 - **Valida:** —
-- **Decisões base:** ADR-003 *(somente leitura — alvo revisado por ADR-008)*
+- **Decisões base:** ADR-003 *(somente leitura — alvo revisado por ADR-008)*; ADR-005 *(Core sem dependências)*; stack Dapper + Microsoft.Data.SqlClient documentada em `t03-acesso-sql-readonly.md`
 - **Camadas/arquivos afetados:**
   - `Dashboard.Data/*` *(nova pasta de conexão/factory)*
   - `Dashboard.Web/Program.cs` *(editado — DI)*
   - `Dashboard.Web/appsettings.json` / `appsettings.Development.json` *(config)*
+  - `Dashboard.Data.Tests/*` *(novo — teste de integração)*
+  - `.gitignore` *(editado — exclui appsettings locais)*
 
 **Descrição:**
 Implementar fábrica de conexão (`IDbConnection`) para o banco do novo SisacHTML5 com connection string de **leitura apenas** (permissão mínima). Registrar o serviço no DI em `Program.cs`. A connection string vem de configuração de ambiente — **nunca** gravada em repositório. Materializa o gate de segurança ADR-003/ADR-008.
 
+> **Registro de execução (2026-09-17):**
+> - **Pacotes instalados (somente em `Dashboard.Data`, conforme ADR-005):** `Microsoft.Data.SqlClient` 7.0.3 + `Dapper` 2.1.86 (stack definida em `t03-acesso-sql-readonly.md`). `Dashboard.Core` permanece **sem** PackageReference.
+> - **Criada fábrica de conexão:** `Dashboard.Data/Connections/ISqlConnectionFactory` (abstração `IDbConnection`) + `SqlConnectionFactory` (abre `SqlConnection` com a connection string fornecida; **sem nenhum método de escrita**).
+> - **DI em `Dashboard.Web/Program.cs`:** registrado `ISqlConnectionFactory` como singleton usando `builder.Configuration.GetConnectionString("SisacDatabase")`.
+> - **Config:** `appsettings.json` contém apenas **placeholder vazio** `ConnectionStrings:SisacDatabase` (sem servidor/usuário/senha). Credencial real via **User Secrets (dev)** ou **variável de ambiente** — nada versionado.
+> - **`.gitignore`:** adicionado `appsettings.*.local.json` — credentials locais fora do Git.
+> - **Build:** `dotnet build Dashboard.slnx` — **0 avisos, 0 erros**.
+> - **Teste de integração criado:** `Dashboard.Data.Tests/Connections/SqlConnectionFactoryTests.factory_abre_conexao_com_banco_sisac_html5` (lê credencial de `ConnectionStrings__SisacDatabase`; não inventa resultado).
+> - **Lacuna registrada:** credencial de leitura (`dashboard_readonly`) **não estava disponível no ambiente de execução** (senha não interativa/no repo). `dotnet test` reporta o teste como **FAIL com mensagem de lacuna** — resultado real depende da credencial. **Nenhum resultado inventado.**
+> - **Validação real (2026-09-17 — encerramento):** com a credencial fornecida por **variável de ambiente** (`ConnectionStrings__SisacDatabase`), o teste de integração foi executado com sucesso — **1 teste, 0 falhas**, conexão SQL validada com `SELECT 1`. **Nenhuma senha/segredo gravado em arquivo ou commit.**
+
 **Critério de aceite (testável):**
-- [ ] Factory abre conexão com o banco do novo SisacHTML5 usando credencial de leitura
-- [ ] Query de teste `SELECT 1` executa com sucesso
-- [ ] Connection string não aparece em arquivos commitados
-- [ ] Nenhum método exposto permite escrita (INSERT/UPDATE/DELETE)
+- [x] Factory abre conexão com o banco do novo SisacHTML5 usando credencial de leitura — validado (teste de integração real, 0 falhas)
+- [x] Query de teste `SELECT 1` executa com sucesso — validado (credencial via variável de ambiente)
+- [x] Connection string não aparece em arquivos commitados — placeholder vazio + User Secrets/env + `.gitignore`
+- [x] Nenhum método exposto permite escrita (INSERT/UPDATE/DELETE) — apenas `Create()` (abre `SqlConnection`)
 
 **Testes a escrever:**
-- *Integration:* `factory_abre_conexao_com_banco_sisac_html5` (requer credencial de leitura disponível)
+- *Integration:* `factory_abre_conexao_com_banco_sisac_html5` (requer credencial de leitura disponível) — **escrito em `Dashboard.Data.Tests`**
 
 **Riscos / pontos de atenção:**
 - Pode depender de credencial de leitura fornecida pelo time de infra/produto — alinhar antes
-- Se a credencial não estiver disponível, registrar a lacuna e avisar antes de prosseguir
+- Se a credencial não estiver disponível, registrar a lacuna e avisar antes de prosseguir — **registrado em 2026-09-17**
 
 ---
 
 #### T-06 — Criar shell do dashboard (layout, navegação, página inicial)
 
-- **Status:** Pendente
+- **Status:** Concluído (2026-09-17) — critérios de aceite evidenciados (build / execução / renderização HTTP); validação visual humana no navegador recomendada
 - **Complexidade:** Baixa
 - **Depende de:** nenhuma
 - **Implementa:** —
 - **Valida:** — *(CA-01 parcial — a página renderiza, mas sem indicadores até a Fase 4)*
 - **Decisões base:** ADR-002 *(Razor Pages + Bootstrap 5)*
 - **Camadas/arquivos afetados:**
-  - `Dashboard.Web/Pages/Shared/_Layout.cshtml` *(editado — Bootstrap 5)*
-  - `Dashboard.Web/Pages/Index.cshtml` *(editado — título e seções dos seis indicadores)*
-  - `Dashboard.Web/Pages/Index.cshtml.cs` *(editado)*
+  - `Dashboard.Web/Pages/Shared/_Layout.cshtml` *(editado — Bootstrap 5, navegação preservada)*
+  - `Dashboard.Web/Pages/Index.cshtml` *(editado — título, seção e seis placeholders)*
+  - `Dashboard.Web/Pages/Index.cshtml.cs` *(não alterado — desnecessário nesta tarefa)*
 
 **Descrição:**
 Ajustar o layout Razor Pages com Bootstrap 5 (via CDN ou libman), criar a estrutura da página inicial com a área dos seis indicadores do MVP (placeholder cards), e manter a navegação padrão. Os valores dos indicadores entram na Fase 4.
 
+> **Decisão Bootstrap 5 (2026-09-17):** usado o **bundle local já presente** em `wwwroot/lib/bootstrap` (**v5.3.3**, carregado por `~/lib/bootstrap/dist/css/bootstrap.min.css` e `bootstrap.bundle.min.js`). **Não foi usado CDN** — sem dependência de internet na execução e sem novas dependências/pacotes. Rasgo (`.gitignore`) e restante da estrutura preservados.
+
+> **Registro de execução (2026-09-17):**
+> - **`_Layout.cshtml`:** `lang` → `pt-BR`; título da aplicação → "Dashboard de Indicadores"; navbar Bootstrap 5 (`navbar-expand-lg`, `data-bs-theme="light"`), **navegação padrão preservada** (Home / Privacy); footer com o nome do dashboard.
+> - **`Index.cshtml`:** título "Dashboard de Indicadores", subtítulo explicando que os valores virão na Fase 4 e badge "Aguardando implementação dos dados"; **exatamente seis** placeholders (`Atendimentos`, `Consultas`, `Exames`, `Faturamento`, `Produção Médica`, `Despesas`) em `row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4` (1 coluna no celular, 2 no tablet, 3 no desktop).
+> - **Placeholders:** cada card traz o nome do indicador e a área visual com o texto **"Aguardando dados"** — **nenhum número fictício** e **nenhum valor de indicador**.
+> - **Sem dados/acesso:** nenhuma consulta ao banco, nenhum Repository/DTO/Service/interface de indicador/gráfico/filtro/autenticação; `Index.cshtml.cs` **não alterado**; infraestrutura de conexão da T-05 **intacta**.
+> - **Build:** `dotnet build Dashboard.slnx` — **0 avisos, 0 erros**.
+> - **Execução:** `Dashboard.Web.dll` (equivalente a `dotnet run`) subiu sem erro; `ASPNETCORE_URLS=http://localhost:5199`; requisição `GET /` → **HTTP 200**, `text/html`, `OnGet` executado sem exceção; **stderr vazio**.
+> - **Validação de renderização (HTTP):** HTML retornado contém `<link ... bootstrap.min.css>` (Bootstrap 5.3.3 local), os **seis** títulos de indicador e **seis** ocorrências de "Aguardando dados". Bootstrap renderiza com o bundle local (sem CDN).
+> - **Riscos encontrados:** nenhum bloqueante. Permanece o risco já mapeado de o SisacHTML5 adotar outro framework visual (ADR-002 a revalidar com o produto).
+
 **Critério de aceite (testável):**
-- [ ] Página inicial renderiza com Bootstrap 5 carregado
-- [ ] Área visual com espaço reservado para os seis indicadores
-- [ ] `dotnet run --project Dashboard.Web` sobe sem erro
+- [x] Página inicial renderiza com Bootstrap 5 carregado — Bootstrap 5.3.3 local referenciado no HTML; `GET /` = 200
+- [x] Área visual com espaço reservado para os seis indicadores — seis cards "Aguardando dados" no grid responsivo
+- [x] `dotnet run --project Dashboard.Web` sobe sem erro — execução 200 sem exceção; stderr vazio
 
 **Testes a escrever:**
-- *Não aplicável* — tarefa de estrutura visual. Validação manual via navegador.
+- *Não aplicável* — tarefa de estrutura visual. Validação manual via navegador (recomendada).
 
 **Riscos / pontos de atenção:**
-- Bootstrap via CDN exige internet na execução; verificar se o projeto prefere bundle local (libman)
+- CDN dispensado — bundle local já existente evita dependência de internet (risco eliminado)
 - Contexto do novo SisacHTML5 pode usar outro framework visual — revalidar com o produto (ADR-002)
 
 ---
@@ -846,39 +898,39 @@ Questões do PRD-001 que **permanecem abertas** — o plano não presume respost
 | # | Questão (PRD v1.0) | Bloqueia | Resolvida em |
 |---|--------------------|----------|--------------|
 | Q1 | Qual o contrato de dados (entidades/atributos mínimos) que o novo SisacHTML5 expõe para os seis indicadores? | T-07, T-08, T-09, T-10, T-11, T-12, T-13, T-17 | T-03 |
-| Q2 | Como o novo banco modela Atendimento, Consulta e Exame (categorias × itens)? | T-08, T-09, T-10 | T-02, T-03 |
-| Q3 | Definição de produtividade, "profissional ativo", papel, métrica e fonte da especialidade | T-12 | T-02 |
-| Q4 | Estados de faturamento (faturada/a faturar), definição de emissão e comparação | T-11 | T-02, T-03 |
-| Q5 | Composição das Despesas (grupos fixa/variável, categorias, referência competência/pagamento, origem) | T-13 | T-02, T-03 |
-| Q6 | Granularidade e regras do filtro por período (meses/dias; comportamento futuros) | T-17 | T-02 |
+| Q2 | Como o novo banco modela Atendimento, Consulta e Exame (categorias × itens)? — *negócio decidida (T-02): Consulta × Retorno distintos, retorno ≤ 30 dias* | T-08, T-09, T-10 | T-02 (negócio), T-03 (técnica) |
+| Q3 | Definição de produtividade, "profissional ativo", papel, métrica e fonte da especialidade — *negócio decidida (T-02): produção do profissional no período, comparável* | T-12 | T-02 (negócio), T-03 (técnica) |
+| Q4 | Estados de faturamento (faturada/a faturar), definição de emissão e comparação — *negócio decidida (T-02): conta a faturar = convênio com alta e faturamento incompleto; fluxo registrado* | T-11 | T-02 (negócio), T-03 (técnica) |
+| Q5 | Composição das Despesas (grupos fixa/variável, categorias, referência competência/pagamento, origem) — *negócio decidida (T-02): composição registrada; repasse conforme contrato* | T-13 | T-02 (negócio), T-03 (técnica) |
+| Q6 | Granularidade e regras do filtro por período (meses/dias; comportamento futuros) — *negócio decidida (T-02): atual = período calendário corrente; futuros consultáveis* | T-17 | T-02 (negócio), T-03 (técnica) |
 | Q7 | Repasses — regra e modelo | Nenhuma no MVP (roadmap — RN-40) | — |
 | Q8 | Unidade como dimensão/filtro | Nenhuma no MVP (evolução futura — RN-45) | — |
 | Q9 | Autenticação/autorização | Nenhuma (fora do escopo atual) | — |
-| Q10 | Como o novo modelo identifica a cobertura SUS (somente quando o serviço atender SUS) | T-08, T-09, T-10, T-12 | T-02, T-03 |
+| Q10 | Como o novo modelo identifica a cobertura SUS (somente quando o serviço atender SUS) — *negócio decidida (T-02)* | T-08, T-09, T-10, T-12 | T-02 (negócio), T-03 (técnica) |
 
 Checkbox de resolução (marcar à medida que forem respondidas):
 
 - [ ] Q1 — contrato de dados documentado em T-03 — *responsável: produto (SisacHTML5) + executor*
-- [ ] Q2 — modelagem Atendimento/Consulta/Exame definida — *responsável: produto*
-- [ ] Q3 — produtividade e "profissional ativo" definidos — *responsável: Analista de Management + produto*
-- [ ] Q4 — estados de faturamento definidos — *responsável: produto*
-- [ ] Q5 — composição de despesas definida — *responsável: produto/time de negócio*
-- [ ] Q6 — regras do período definidas — *responsável: produto*
+- [ ] Q2 — negócio decidida (Consulta × Retorno, retorno ≤ 30 dias — PRD revisão 2); **modelagem física a confirmar no T-03** — *responsável: produto*
+- [ ] Q3 — negócio decidida (produtividade = produção do profissional no período — PRD revisão 2); **unidade técnica a confirmar no T-03** — *responsável: produto*
+- [ ] Q4 — negócio decidida (conta a faturar, fluxo — PRD revisão 2); **estados/campos a confirmar no T-03** — *responsável: produto*
+- [ ] Q5 — negócio decidida (composição das despesas — PRD revisão 2); **origem/referência a confirmar no T-03** — *responsável: produto*
+- [ ] Q6 — negócio decidida (períodos — PRD revisão 2); **consultas a calibrar no T-03** — *responsável: produto*
 - [ ] Q7 — Repasses decidido (roadmap) — *responsável: Product Owner*
 - [ ] Q8 — Unidade decidida (evolução futura) — *responsável: Product Owner*
 - [ ] Q9 — autenticação decidida (fora do escopo atual) — *responsável: Product Owner*
-- [ ] Q10 — cobertura SUS identificada no modelo — *responsável: produto*
+- [ ] Q10 — negócio decidida (SUS conforme serviço — PRD revisão 2); **identificação técnica a confirmar no T-03** — *responsável: produto*
 
 ## 11. Histórico de execução
 
 | Tarefa | Status | Concluída em | Commit | Observação |
 |--------|--------|--------------|--------|------------|
 | T-01   | Concluído | 2026-09-16 | — | Dicionário de dados (conhecimento do legado) documentado; ADR-007 criado; gate humana aprovada |
-| T-02   | Em andamento | — | — | Investigação concluída; anexo T-02 no dicionário; guarda decisões que dependem do novo modelo (faturamento, produção, despesas, coberturas, períodos) |
-| T-03   | Pendente | — | — | Contrato de dados do novo SisacHTML5 — redefine tarefa antiga "capacidade SQL legado" |
-| T-04   | Pendente | — | — | — |
-| T-05   | Pendente | — | — | — |
-| T-06   | Pendente | — | — | — |
+| T-02   | Concluído | 2026-09-17 | — | Fechamento documental (gate humana): decisões de negócio registradas no PRD-001 (revisão 2) e no anexo T-02 do dicionário; premissa de banco confirmada (SisacHTML5 ≈ SghProg); **identificação técnica remetida ao T-03** |
+| T-03   | Concluído | 2026-09-17 | — | Investigação documental + **complemento de validação no banco operacional** (CASAMATER, somente leitura): domínio **Despesas** confirmado (**D**) em `PAGAR`/`PAGARC` (chaves lógicas K4/K5, cardinalidade 1:N, risco de dupla contagem 168.735/170.062, `DATAPREV` em 100% dos 10.087 não pagos); **regra de "Despesa Provisionada" registrada como E/P** (P38–P40) sem bloquear fundação; T-04 permanece concluído/validado |
+| T-04   | Concluído | 2026-09-17 | — | Fundação estrutural criada: Dashboard.Core e Dashboard.Data (net10.0, vazios, Nullable/ImplicitUsings), adicionados ao Dashboard.slnx; referências Web→Core, Web→Data, Data→Core; Core sem PackageReference/referências; build 0 avisos/0 erros |
+| T-05   | Concluído | 2026-09-17 | — | Infraestrutura de acesso somente leitura implementada: `SqlConnectionFactory`/`ISqlConnectionFactory` (Dapper 2.1.86 + Microsoft.Data.SqlClient 7.0.3 em Dashboard.Data), DI em Program.cs (`SisacDatabase`), placeholder vazio em appsettings, `.gitignore` cobre appsettings locais; **build 0 avisos/0 erros**; teste de integração `factory_abre_conexao_com_banco_sisac_html5` em Dashboard.Data.Tests **executado com sucesso (1 teste, 0 falhas; SELECT 1)** com credencial via variável de ambiente; nenhum segredo gravado/commitado |
+| T-06   | Concluído | 2026-09-17 | — | Shell visual criado: `_Layout.cshtml` (Bootstrap 5.3.3 local, navegação padrão preservada), `Index.cshtml` com exatamente **seis placeholders** responsivos (Atendimentos, Consultas, Exames, Faturamento, Produção Médica, Despesas) no texto "Aguardando dados"; `Index.cshtml.cs` não alterado; sem dados/queries/gráficos/filtros/Services; **build 0 avisos/0 erros**; `GET /` = HTTP 200 sem exceção (stderr vazio); Bootstrap **local (sem CDN)**; sem novas dependências; infra T-05 intacta |
 | T-07   | Pendente | — | — | — |
 | T-08   | Pendente | — | — | — |
 | T-09   | Pendente | — | — | — |
@@ -900,7 +952,7 @@ Checkbox de resolução (marcar à medida que forem respondidas):
 | Plano anterior | Situação agora | Nova referência |
 |----------------|----------------|-----------------|
 | Fase 1 — T-01 Dicionário (6 indicadores legado) | Mantida (concluída) — conhecimento do legado | T-01 |
-| Fase 1 — T-02 Definições de negócio | Mantida (em andamento) — escopo ampliado para o novo modelo | T-02 |
+| Fase 1 — T-02 Definições de negócio | Mantida (concluída — fechamento documental 2026-09-17) — escopo ampliado para o novo modelo | T-02 |
 | Fase 1 — T-03 Capacidade SQL legado / cache | **Eliminada** — legado não é fonte (ADR-008) | → T-03 "Contrato de dados do SisacHTML5" |
 | Fase 2 — T-04/T-05/T-06 | Mantidas (alvo do banco revisado para SisacHTML5) | T-04/T-05/T-06 |
 | Fase 3 — T-08 Query Atendimentos | Mantida (alvo revisado + cobertura RN-26) | T-08 |

@@ -1,5 +1,12 @@
 ### ADR-008: Banco do novo SisacHTML5 como única fonte operacional do Dashboard
 
+> **Nota de revisão (2026-09-17 — fechamento documental T-02):** o **banco SQL padrão que será instalado para o SisacHTML5 é essencialmente o mesmo banco utilizado pelo SghProg** — com poucas mudanças e exclusões de colunas; a estrutura geral, tabelas e organização seguem o padrão do SghProg. Esta premissa **não altera a decisão abaixo** (o banco operacional do SisacHTML5 permanece a única fonte operacional do Dashboard), mas deve ser registrada como orientação para o T-03:
+> - o **SghProg continua sendo uma fonte válida de conhecimento estrutural** para a engenharia reversa;
+> - **não se assume que exista um modelo de dados completamente novo** e **não se descartam automaticamente** tabelas, campos ou estruturas conhecidas do SghProg;
+> - cabe ao **T-03 confirmar** quais estruturas realmente permanecem no banco padrão do SisacHTML5;
+> - diferenças, exclusões ou alterações entre SghProg e SisacHTML5 devem ser tratadas como **evidência de evolução do modelo**;
+> - **regras de negócio não são copiadas automaticamente do SghProg** para o Dashboard — a estrutura pode orientar a investigação, mas as regras são determinadas pelas decisões atuais do produto (ADR-007).
+
 - **Contexto**: O Dashboard Sisac Brasil fará parte do novo sistema **SisacHTML5**, que substituirá o sistema legado VCL/Delphi. Quando o novo sistema estiver em operação, o banco legado **não estará em funcionamento**. As decisões anteriores (ADR-003 e ADR-006) previam que o Dashboard consultaria o banco legado em modo somente leitura durante o runtime. A gate de negócio (2026-09-16) redefine a fonte de dados do Dashboard.
 
 - **Decisão**:

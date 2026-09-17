@@ -8,8 +8,11 @@
 
 > ⚠️ **Reposicionamento (ADR-008 — 2026-09-16):** o schema legado descrito neste documento é **evidência histórica e fonte de conhecimento** para compreender conceitos de negócio — **não é contrato de dados** do Dashboard. O Dashboard consulta exclusivamente o **banco do novo SisacHTML5** (única fonte operacional). Este documento **não** deve ser usado para presumir nomes de tabelas/colunas no novo banco; os nomes físicos serão definidos pelo modelo do SisacHTML5 (T-03) e registrados na seção 14.
 
-**Status:** Aguardando validação pelo time que opera o legado (gate humana obrigatória)
-**Data:** 2026-09-16
+> ⚠️ **Premissa de banco (fechamento documental T-02 — 2026-09-17; ADR-008):** o **banco SQL padrão instalado para o SisacHTML5 é essencialmente o mesmo banco utilizado pelo SghProg** (poucas mudanças/exclusões de colunas; estrutura geral, tabelas e organização no padrão do SghProg). Portanto: (1) o **SghProg permanece fonte estrutural válida** para a engenharia reversa e para orientar o T-03; (2) **não se assume um modelo completamente novo** e **não se descartam automaticamente** as tabelas/campos/estruturas documentados nas seções 1–13; (3) cabe ao **T-03 confirmar no banco operacional do SisacHTML5 quais estruturas permanecem** — as diferenças/exclusões serão registradas como **evidência de evolução do modelo**; (4) **regras de negócio não são copiadas do SghProg** — as regras seguem as decisões atuais do produto (PRD-001 revisão 2; ADR-007).
+> **Nomenclatura:** "SghProg" é o sistema legado (solução de gestão de saúde) cuja base instalada origina o banco padrão do SisacHTML5; equipara-se à suíte "SISAC"/banco `CASAMATER` descritos a seguir — *confirmação solicitada ao time que opera o legado*.
+
+**Status:** Anexo T-02 atualizado com o fechamento documental (2026-09-17) — decisões de negócio registradas; identificação técnica pendente do T-03
+**Data:** 2026-09-16 *(revisado em 2026-09-17)*
 **Origem das descobertas (legado):** banco CASAMATER na instância local `DESENVHMSISAC0215\MSSQLSERVER2022` (SQL Server 2022 Developer; servidor `DESENVHMSISAC02`). Consultas de catálogo (`sys.tables`, `sys.columns`, `sys.partitions`), definição da proc `SP_ATUALIZA_DASHBOARD` (`OBJECT_DEFINITION`) e amostragem de domínios (`GROUP BY`) — todas somente leitura.
 
 ---
@@ -324,7 +327,7 @@ Todas as afirmações acima são reproduzíveis via consultas **somente leitura*
 
 ---
 
-## 13. T-02 — Definições de negócio (evidências levantadas; aguarda gate humana)
+## 13. T-02 — Definições de negócio (fechamento documental concluído em 2026-09-17)
 
 **Objetivo:** responder as questões do §12 usando a lógica interna das procedures de carga do legado (origem: `OBJECT_DEFINITION` de `SP_ATUALIZA_DASHBOARD`, `SP_TabIndicador`, `SP_PacienteDia`, `SP_TAXAOCUP`), diferenciando **Fato**, **Regra confirmada**, **Hipótese** e **Dependente do usuário**.
 
@@ -429,23 +432,43 @@ Mapeamento explícito no CASE da proc `ENTRADA.Tipo`:
 5. **Convênios**: agrupar por `CODCONVENIO`; métrica a confirmar.
 6. **Faturamento por convênio** também existia no legado (`FATURADOCONV`) — suporte a "ambos" em Q6.
 
-### 13.12. Perguntas que permanecem dependentes de stakeholders (para aprovação da gate)
+### 13.12. Pendências que permanecem para o T-03 (identificação física)
+
+> **Nota (fechamento documental T-02 — 2026-09-17):** a **decisão de negócio** das questões Q2–Q6 e Q10 foi fornecida pela gate humana e está registrada em **§13.13** abaixo. Os itens desta lista permanecem como **pendências técnicas de identificação física** no banco padrão do SisacHTML5 — a resolver no **T-03** (com apoio do time que opera o legado), **sem inventar respostas** e **sem copiar automaticamente estados/códigos do SghProg** como contrato.
 
 - [ ] **Time do legado:** significado de `TIPO='7'`, `'P'`, `'U'` e de `TIPOATEND`; se a fonte de tipos do novo dashboard é `TIPO` ou `TIPOATEND` (Q2).
 - [ ] **Time do legado:** relação entre `TIPOGLOSA` (4 díg.), `TabGlosa` (motivos 3 díg.) e `GLOSA.MOTIVO`; semântica de `GLOSA.CONDICAO` (A/B/R); se existe distinção técnica × financeira (Q5).
-- [ ] **Time do legado/responsável PRD:** "guia emitida" (RN-12) equivale a `Fechado IN ('F','E')` (Fechada + Enviada)? (13.1)
-- [ ] **Analista de Management:** definição de "profissional ativo"; papel a contar; fonte de especialidade (Q3).
-- [ ] **Gestor Clínico:** método de ocupação (agregado do período) e capacidade (física) (Q4); fonte ativa de leitos.
-- [ ] **Diretor Operacional:** métrica de Convênios — volume, faturamento ou ambos (Q6).
+- [ ] **Time do legado/responsável PRD:** "guia emitida" (RN-12) equivale a `Fechado IN ('F','E')` (Fechada + Enviada)? (13.1) — equivalência a revalidar no banco do SisacHTML5.
+- [ ] **Analista de Management / produto:** identificação técnica de "profissional ativo"; papel a contar; fonte de especialidade (Q3) — no banco do SisacHTML5.
+- [ ] **Diretor Operacional / produto:** se a métrica de Convênios será exposta (volume, faturamento ou ambos) quando o indicador for solicitado (fora do MVP) (Q6).
 - [ ] **Responsável PRD/UI:** exposição de empresa/filial; nível de unidade selecionável.
+
+### 13.13. Decisões de negócio confirmadas (gate humana — 2026-09-17)
+
+- **Produtividade Médica (Q3):** produtividade = **o quanto o profissional de saúde produziu dentro do período**, permitindo **comparação entre profissionais**. A produção **não** é presumida como apenas quantidade de consultas — consultas, exames solicitados e outras produções efetivamente registradas podem compô-la. A **unidade técnica de produção** será confirmada no T-03 a partir do modelo disponível no SisacHTML5; **não se inventa fórmula** (valida RN-16).
+- **Conta a faturar (Q4):** contas de pacientes atendidos por **Convênio** que receberam **alta** e que ainda **não foram completamente faturadas**; podem permanecer em movimento próprio até o faturamento completo. **Fluxo conceitual:** Atendimento por Convênio → Alta → Conta em processo de faturamento → Envio/auditoria → Faturamento completo. **Não** se reutilizam automaticamente os estados/códigos do SghProg; a representação no banco do SisacHTML5 será identificada no **T-03** (valida RN-31/RN-33).
+- **Despesas (Q5):** **Fixas:** energia, água, aluguel, condomínio, salários e repasses médicos com datas de vencimento previstas em contrato. **Variáveis:** compras de equipamentos, móveis, utensílios necessários ao local de atendimento e repasse médico conforme contrato. O **repasse médico pode ser fixo ou variável conforme a natureza contratual** — **não** se classifica automaticamente em categoria única; origem, classificação e data de referência das despesas serão identificadas no **T-03** (valida RN-37/38 e nota de repasse).
+- **Consulta × Retorno (Q2):** **Consulta** = atendimento realizado pelo profissional de saúde a um paciente. **Retorno** = consulta associada a uma consulta anterior, **agendada previamente ou não**, ocorrendo dentro do prazo de **até 30 dias** da data da consulta. Conceitos **distintos** para o negócio; a identificação técnica de cada um no banco do SisacHTML5 será confirmada no **T-03** (não se assume código) (valida RN-28).
+- **Coberturas (Q10):** Particular, Convênio e SUS; **SUS somente quando o serviço atender SUS** (RN-26). A identificação técnica de Particular/Convênio/SUS — inclusive o reconhecimento do atendimento SUS via cadastro/configuração — será confirmada no **T-03**.
+- **Período (Q6):** período **atual** = período calendário corrente; **períodos futuros são consultáveis**; quando não houver dados (inclusive futuros), o sistema apresenta **estado informativo/sem dados** — ausência de dados futuros **não é previsão** (valida RN-04).
+- **Premissa estrutural (ADR-008):** o banco padrão do SisacHTML5 é **essencialmente o mesmo banco do SghProg**; o SghProg é **referência estrutural válida** e estruturas conhecidas não são descartadas automaticamente; diferenças vs. o SisacHTML5 são **evidência de evolução do modelo** a confirmar no **T-03**. **Regras de negócio não são copiadas do SghProg.**
+
+### 13.14. Itens dependentes da T-03 (identificação física — não inventar)
+
+- Entidade física de **Consulta**, de **Retorno** e de **Exame**; identificação dos tipos assistenciais no banco do SisacHTML5.
+- Identificação de **Particular / Convênio / SUS** (cadastro/configuração); identificação do atendimento **SUS** por serviço.
+- **Unidade de produção médica**; identificação de **profissional ativo**; **papéis profissionais**.
+- **Estados de conta faturada** e de **conta a faturar**; campo/evento de **emissão / envio / faturamento completo**; estrutura de **movimentos de faturamento**.
+- **Origem** e **classificação** das despesas; **data de referência** das despesas.
+- Estrutura que representa a **alta do paciente** (gatilho para a conta entrar em processo de faturamento).
 
 ---
 
 ## 14. Domínios conceituais do Dashboard (novo SisacHTML5 — T-03)
 
-> **Finalidade:** registrar os **domínios conceituais** que o Dashboard precisa consumir do **banco do novo SisacHTML5** (única fonte operacional — ADR-008). Esta seção **não** inventa nomes físicos de tabelas/colunas: o contrato de dados (entidades, atributos, estados, relacionamentos) será definido e validado com o produto na tarefa **T-03** (PLAN-001). O conhecimento descrito nas seções 1–13 é **evidência histórica**, não contrato.
+> **Finalidade:** registrar os **domínios conceituais** que o Dashboard precisa consumir do **banco do novo SisacHTML5** (única fonte operacional — ADR-008). Esta seção **não** inventa nomes físicos de tabelas/colunas: o contrato de dados (entidades, atributos, estados, relacionamentos) será definido e validado com o produto na tarefa **T-03** (PLAN-001). O conhecimento descrito nas seções 1–13 é **evidência histórica** — e, a partir do fechamento documental T-02 (2026-09-17), também **referência estrutural** para orientar o T-03 (banco padrão do SisacHTML5 ≈ banco do SghProg; diferenças = evolução do modelo a confirmar).
 >
-> Legenda de origem: **C** = conceito definido na gate de negócio / PRD-001 v1.0 · **R** = regra a formalizar · **U** = questão em aberto.
+> Legenda de origem: **C** = conceito definido na gate de negócio / PRD-001 (v1.0 e revisão 2) · **D** = decidido no fechamento T-02 (2026-09-17) · **R** = regra a formalizar · **U** = questão em aberto.
 
 ### 14.1. Atendimento
 
@@ -456,8 +479,8 @@ Mapeamento explícito no CASE da proc `ENTRADA.Tipo`:
 ### 14.2. Consulta
 
 - **C:** registra consultas realizadas. Indicador: **Consultas** (RN-28).
-- **C:** distinção **primeira consulta / retorno** conforme definição do produto (RN-28).
-- **R/U:** relação com Atendimento definida pelo novo modelo (RN-30) — entidade própria ou categoria.
+- **D:** **Consulta** = atendimento realizado pelo profissional de saúde a um paciente. **Retorno** = consulta associada a uma consulta anterior, **agendada previamente ou não**, ocorrendo em até **30 dias** da data da consulta (RN-28 — decisão T-02). Conceitos **distintos**.
+- **R/U:** identificação técnica de Consulta e de Retorno no banco do SisacHTML5 e relação com Atendimento (RN-30) — entidade própria ou categoria — a confirmar no T-03 (não se assume código).
 
 ### 14.3. Exame
 
@@ -468,24 +491,28 @@ Mapeamento explícito no CASE da proc `ENTRADA.Tipo`:
 ### 14.4. Cobertura (categoria de atendimento)
 
 - **C:** **Particular**, **Convênio** (efetivamente cadastrado no SisacHTML5) e **SUS** (somente quando o serviço atender SUS) (RN-26).
-- **U:** como o novo modelo identifica a cobertura SUS no cadastro (RN-26, Q10, T-02/T-03).
+- **D:** SUS identificado somente quando o serviço atender SUS — decidido em T-02 (RN-26).
+- **U:** como o novo modelo identifica a cobertura SUS no cadastro/configuração (cadastro do serviço) e a categoria de cobertura por atendimento — **identificação técnica a confirmar no T-03** (RN-26, Q10).
 
 ### 14.5. Guia / Conta e Faturamento
 
 - **C:** base do indicador **Faturamento** (RN-10..RN-13). Dados conceituais mínimos: estado da conta, data de emissão, convênio, valor(es) e itens (valor, quantidade, categoria), unidade.
 - **C:** distinção entre **contas faturadas** e **contas a faturar** (RN-31); comparação **período anterior × atual** (RN-32).
-- **R/U:** estados efetivos no novo banco, definição de "emissão" e fórmula de "a faturar" (RN-33, Q4 — T-02). Base = guia/conta de atendimento, **não** recebimento (RN-12).
+- **D:** **conta a faturar** = contas de pacientes atendidos por **Convênio** que receberam **alta** e ainda **não foram completamente faturadas**, podendo permanecer em movimento próprio até o faturamento completo (RN-31). **Fluxo conceitual:** Atendimento por Convênio → Alta → Conta em processo de faturamento → Envio/auditoria → Faturamento completo (RN-33 — decisão T-02).
+- **R/U:** estados efetivos no novo banco, definição de "emissão", campo/evento de envio e fórmula de "a faturar" (RN-33, Q4 — T-03); estrutura de movimentos de faturamento e estrutura de alta do paciente a identificar no T-03. Base = guia/conta de atendimento, **não** recebimento (RN-12). Estados do SghProg **não** são reutilizados automaticamente como contrato.
 
 ### 14.6. Produção Médica / Profissional
 
 - **C:** base do indicador **Produção Médica** (RN-14..RN-16, RN-34..RN-36).
-- **C:** produção por **profissional ativo**; análise individual/profissional e por categoria de serviço, ambas por cobertura (RN-26, RN-35, RN-36).
-- **R/U:** definição exata de produtividade, "profissional ativo", papel a contar, métrica e fonte de especialidade (RN-16/RN-34, Q3 — T-02). Especialidade é informação futura de formalização (RN-15).
+- **C:** produção por **profissional**; análise individual/profissional e por categoria de serviço, ambas por cobertura (RN-26, RN-35, RN-36).
+- **D:** **produtividade** = o quanto o profissional produziu no período, permitindo **comparação entre profissionais**; produção **não** presumida como apenas consultas — consultas, exames solicitados e outras produções registradas podem compô-la (RN-16 — decisão T-02). Especialidade é informação futura de formalização (RN-15).
+- **R/U:** **unidade técnica de produção**, identificação de **profissional ativo** e **papéis profissionais** no banco do SisacHTML5, a confirmar no T-03 (RN-16/RN-34, Q3); **não se inventa fórmula**.
 
 ### 14.7. Despesas
 
 - **C:** base do indicador **Despesas** — grupos **fixas** e **variáveis** (RN-37, RN-38) comparáveis graficamente (RN-39).
-- **R/U:** quais despesas em cada grupo, categorias, **data de referência** (competência × pagamento) e origem no novo banco (Q5 — T-02). Nada derivado do legado como regra.
+- **D:** **Fixas:** energia, água, aluguel, condomínio, salários e repasses médicos com vencimento previsto em contrato. **Variáveis:** compras de equipamentos, móveis, utensílios para determinado local de atendimento e repasse médico conforme contrato. **Repasse médico:** pode ser fixo ou variável conforme a natureza contratual — **não** se classifica automaticamente em categoria única (decisão T-02).
+- **R/U:** **origem**, **classificação** e **data de referência** das despesas, e como o repasse médico é classificado no banco do SisacHTML5 — a confirmar no T-03 (Q5). Nada derivado do legado como regra.
 
 ### 14.8. Repasses (roadmap)
 
@@ -494,7 +521,8 @@ Mapeamento explícito no CASE da proc `ENTRADA.Tipo`:
 ### 14.9. Período de referência dos indicadores
 
 - **C:** mecanismo uniforme de filtro por período — **atual**, **passado** e **futuro**, este e aquele com data inicial e final (RN-04, RN-42, CA-15).
-- **C:** cada indicador possui sua **data de referência de negócio própria** em Core (RN-42): Atendimentos/Consultas/Exames = data do evento; Faturamento = data de emissão da conta; Produção e Despesas = data definida pelas regras formalizadas (T-02).
+- **D:** período **atual** = período calendário corrente; **períodos futuros são consultáveis**; quando não houver dados (inclusive futuros), apresenta-se **estado informativo/sem dados** — ausência de dados futuros **não é previsão** (RN-04, RN-03 — decisão T-02).
+- **C:** cada indicador possui sua **data de referência de negócio própria** em Core (RN-42): Atendimentos/Consultas/Exames = data do evento; Faturamento = data de emissão da conta; Produção e Despesas = data definida pelas regras formalizadas (T-02); a **data de referência das Despesas** será confirmada no T-03 (origem/competência × pagamento).
 - **C:** histórico de **2025 e anteriores** disponível no banco novo para **homologação/demonstração** (RN-44).
 
 ### 14.10. Relações e independência financeira
@@ -504,4 +532,4 @@ Mapeamento explícito no CASE da proc `ENTRADA.Tipo`:
 
 ### 14.11. Observação sobre nomes físicos
 
-> Os nomes físicos de tabelas/colunas/estados do novo banco serão preenchidos nesta seção **somente após a validação do contrato de dados em T-03**, junto ao produto. Até lá, mantêm-se apenas os domínios conceituais acima, para evitar a criação de um novo "contrato inventado" (mesma regra aplicada ao schema legado pela ADR-008).
+> Os nomes físicos e as estruturas candidatas do banco estão documentados no **contrato de dados** (`docs/architecture/contrato-dados-dashboard.md`), classificados como **E** (evidência SghProg/CASAMATER) ou **P** (pendente). A promoção para **D** (confirmado no banco operacional do SisacHTML5) ocorrerá somente após a validação em T-03 com acesso ao banco — evitando a criação de um "contrato inventado" (mesma regra aplicada ao schema legado pela ADR-008).

@@ -1,0 +1,16 @@
+C:\Users\Getulio\source\repos\DashBoardSB\Dashboard\Dashboard.Data\bin\Debug\net10.0\Dashboard.Data.deps.json
+C:\Users\Getulio\source\repos\DashBoardSB\Dashboard\Dashboard.Data\bin\Debug\net10.0\Dashboard.Data.dll
+C:\Users\Getulio\source\repos\DashBoardSB\Dashboard\Dashboard.Data\bin\Debug\net10.0\Dashboard.Data.pdb
+C:\Users\Getulio\source\repos\DashBoardSB\Dashboard\Dashboard.Data\bin\Debug\net10.0\Dashboard.Core.dll
+C:\Users\Getulio\source\repos\DashBoardSB\Dashboard\Dashboard.Data\bin\Debug\net10.0\Dashboard.Core.pdb
+C:\Users\Getulio\source\repos\DashBoardSB\Dashboard\Dashboard.Data\obj\Debug\net10.0\Dashboard.Data.csproj.AssemblyReference.cache
+C:\Users\Getulio\source\repos\DashBoardSB\Dashboard\Dashboard.Data\obj\Debug\net10.0\Dashboard.Data.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Getulio\source\repos\DashBoardSB\Dashboard\Dashboard.Data\obj\Debug\net10.0\Dashboard.Data.AssemblyInfoInputs.cache
+C:\Users\Getulio\source\repos\DashBoardSB\Dashboard\Dashboard.Data\obj\Debug\net10.0\Dashboard.Data.AssemblyInfo.cs
+C:\Users\Getulio\source\repos\DashBoardSB\Dashboard\Dashboard.Data\obj\Debug\net10.0\Dashboard.Data.csproj.CoreCompileInputs.cache
+C:\Users\Getulio\source\repos\DashBoardSB\Dashboard\Dashboard.Data\obj\Debug\net10.0\Dashboard.Data.sourcelink.json
+C:\Users\Getulio\source\repos\DashBoardSB\Dashboard\Dashboard.Data\obj\Debug\net10.0\Dashboar.1154A1D2.Up2Date
+C:\Users\Getulio\source\repos\DashBoardSB\Dashboard\Dashboard.Data\obj\Debug\net10.0\Dashboard.Data.dll
+C:\Users\Getulio\source\repos\DashBoardSB\Dashboard\Dashboard.Data\obj\Debug\net10.0\refint\Dashboard.Data.dll
+C:\Users\Getulio\source\repos\DashBoardSB\Dashboard\Dashboard.Data\obj\Debug\net10.0\Dashboard.Data.pdb
+C:\Users\Getulio\source\repos\DashBoardSB\Dashboard\Dashboard.Data\obj\Debug\net10.0\ref\Dashboard.Data.dll

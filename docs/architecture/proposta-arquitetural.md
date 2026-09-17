@@ -4,6 +4,8 @@
 
 > **Nota de revisão (2026-09-16 — gate de negócio):** o Dashboard passou a ser módulo do novo **SisacHTML5** e a **única fonte operacional** de dados é o **banco do próprio novo SisacHTML5** (ADR-008). O sistema legado VCL/Delphi e seu banco **não são consultados em runtime** — permanecem apenas como **fonte de conhecimento, engenharia reversa e referência histórica**. ADR-003 e ADR-004 tiveram o alvo/contexto revisados; ADR-006 foi parcialmente supersedida por ADR-008. ADR-001, ADR-005 e ADR-007 permanecem válidas.
 
+> **Nota de revisão (2026-09-17 — fechamento documental T-02):** a gate humana forneceu as definições de negócio do MVP (produtividade médica, conta a faturar, despesas, consulta/retorno, períodos — PRD-001 revisão 2). **T-02 concluído documentalmente**. **Premissa de banco:** o **banco SQL padrão instalado para o SisacHTML5 é essencialmente o mesmo banco utilizado pelo SghProg** (poucas mudanças/exclusões de colunas; estrutura geral no padrão do SghProg). Consequências: o SghProg permanece **fonte estrutural válida** para a engenharia reversa e para orientar o T-03; estruturas conhecidas **não são descartadas automaticamente**; as diferenças vs. o banco do SisacHTML5 serão confirmadas no **T-03** e tratadas como **evidência de evolução do modelo**. **Regras de negócio não são copiadas do SghProg** (ADR-007/ADR-008).
+
 ## 1. Sumário executivo
 
 Construímos um dashboard web para visualização de indicadores do novo **SisacHTML5**, acessando dados diretamente no **banco do SisacHTML5** (única fonte operacional) por consulta somente leitura. A arquitetura em três camadas (Web → Core → Data) com Razor Pages e ASP.NET Core prioriza simplicidade operacional, manutenibilidade e segurança no acesso a dados — sem persistir indicadores, sem camada de aplicação, sem CQRS. O escopo é o **MVP de 6 indicadores** (Atendimentos, Consultas, Exames, Faturamento, Produção Médica, Despesas); Repasses permanece em roadmap. O principal risco é o **contrato de dados do novo banco ainda em definição**, mitigado por uma camada de dados com mapeamento explícito, consultas parametrizadas e bloqueio da Fase 3 até o contrato ser validado.
@@ -75,7 +77,7 @@ O novo **SisacHTML5** concentrará os dados operacionais do negócio, substituin
 | Stack | Backend em C# / ASP.NET Core 10.0 | Decisão do projeto |
 | Frontend | Razor Pages com Bootstrap 5 (renderização server-side) — a reavaliar no contexto do SisacHTML5 | Decisão do projeto (ADR-002) |
 | Banco | Banco do novo **SisacHTML5** — **única fonte operacional**, acesso somente leitura | Decisão de negócio (gate 2026-09-16; ADR-008) |
-| Legado | Sistema VCL/Delphi e seu banco **não são consultados em runtime** — uso apenas como conhecimento/referência histórica | Restrição de negócio (ADR-008) |
+| Legado | Sistema VCL/Delphi e seu banco **não são consultados em runtime** — uso apenas como conhecimento/referência histórica e **referência estrutural** (banco padrão do SisacHTML5 ≈ SghProg — ADR-008, revisão 2026-09-17) | Restrição de negócio (ADR-008) |
 | Arquitetura | Sem Application Layer, sem CQRS/Mediator | Decisão de simplificação (ADR-001) |
 | Dados | Sem persistência de indicadores — consultas dinâmicas | Decisão de design (ADR-004) |
 | Core | Dashboard.Core sem dependências externas | Restrição arquitetural (ADR-005) |
@@ -291,14 +293,14 @@ O fluxo é direto: sem camada intermediária, sem cache persistido, sem serializ
 | Contrato de dados do novo banco ainda em definição ou muda sem aviso | Alto | Média | Contrato validado na Fase 1 (T-03) antes de query alguma; queries isoladas na camada Data; testes de integração que validam a estrutura esperada |
 | Performance inadequada para consultas históricas pesadas (2025+) | Médio | Média | Tratamento controlado de lentidão informando o usuário (RN-43); otimização SQL na camada Data; IMemoryCache como otimização pontual se necessário |
 | Permissão de leitura no banco do SisacHTML5 negada ou revogada | Alto | Baixa | Documentar requisitos de permissão; teste de conexão no startup; degradação graciosa (CA-10) |
-| Definições de negócio pendentes (faturamento, produção, despesas) | Médio | Alta | Alinhamento com stakeholders e produto na Fase 1 (T-02); regras em Core (ADR-007); nothing presumido — legado é evidência, não contrato (ADR-008) |
+| Definições de negócio pendentes (faturamento, produção, despesas) | ~~Médio~~ → Baixo | ~~Alta~~ → Baixa | **Fechado (2026-09-17):** definições de negócio registradas (PRD-001 revisão 2; anexo T-02 no dicionário). **Pendente:** identificação técnica (T-03) — banco padrão ≈ SghProg; regras não são copiadas do legado (ADR-007/ADR-008) |
 
 ---
 
 ## 11. Próximos passos
 
-1. Fechar as definições de negócio do MVP (Fase 1 — T-02: faturamento, produção, despesas, coberturas, períodos)
-2. Estabelecer e validar o contrato de dados do banco do SisacHTML5 para os seis indicadores (Fase 1 — T-03)
+1. ~~Fechar as definições de negócio do MVP (Fase 1 — T-02: faturamento, produção, despesas, coberturas, períodos)~~ — **concluído documentalmente (2026-09-17)**
+2. Estabelecer e validar o contrato de dados do banco do SisacHTML5 para os seis indicadores (Fase 1 — T-03) — **partindo da estrutura conhecida do SghProg** (banco padrão do SisacHTML5 ≈ SghProg — ADR-008) e **validando as diferenças/exclusões** no banco operacional do SisacHTML5
 3. Criar projetos Dashboard.Core e Dashboard.Data no Dashboard.slnx (T-04)
 4. Definir contratos (interfaces) em Dashboard.Core para acesso a dados (T-07)
 5. Implementar queries dos indicadores em Dashboard.Data, conforme o contrato validado (T-08 a T-13)

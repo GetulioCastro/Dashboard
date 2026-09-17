@@ -1,7 +1,12 @@
+using Dashboard.Data.Connections;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+
+builder.Services.AddSingleton<ISqlConnectionFactory>(
+    new SqlConnectionFactory(builder.Configuration.GetConnectionString("SisacDatabase")));
 
 var app = builder.Build();
 
