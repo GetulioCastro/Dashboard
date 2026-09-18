@@ -123,8 +123,8 @@ Distribuição observada de `ENTRADA.Fechado`: `E`=1.602.045, `A`=181.246, `F`=4
 | Tipo | Conteúdo |
 |---|---|
 | **Regra confirmada** | Trigês fontes distintas (ENTRADA, dbo.BI_Atendimento, BI.BI_Atendimento) carregam a contagem de movimentos por período com filtro por unidade (`LOCAL`/`LocalAtendimento`) e por convênio. |
-| **Hipótese T-01** | Para **Atendimentos**, usar `ENTRADA` (mestre, atual, com `DATAHORAENT` = data de referência conforme RN-09) é o caminho principal; as tabelas `BI_*` servem como fonte alternativa/facilitadora, mas têm defasagem (dbo parou 2016; BI novo cobre 2018+) e podem não cobrir a totalidade dos movimentos. |
-| **Questão em aberto (Q2)** | Não há descrição no schema para os códigos de `ENTRADA.TIPO` (1–7) e `ENTRADA.TIPOATEND` (0–13). O `BI.BI_Atendimento.TipoAtendimento` em texto (Consulta/Exame/Pequeno Procedimento/Retorno/Cirurgia/Clínico) ajuda, mas a **definição oficial** de "tipo de atendimento" precisa ser confirmada com o time (T-02). |
+| **Fonte canônica — decidida (T-08, 2026-09-18)** | `ENTRADA` (mestre completo 2005→2024; `DATAHORAENT` = referência RN-09) com cobertura derivada de `CODCONVENIO → CADCONVENIO.MODOFAT`. `BI_*` permanece como fonte de homologação/validação (defasagens: dbo parou em 2016; BI novo cobre 2018+). |
+| **Tipo de atendimento — decidida (T-08)** | `ENTRADA.TIPO` é a fonte do tipo (RN-08), com mapeamento 1–6 confirmado pela rotulação do `BI.BI_Atendimento.TipoAtendimento` (join 2024); `7`/`P`/`U`/`''`/`NULL` → **"Não classificado"**. `TIPOATEND` documentado, mas não usado como classe (padding inconsistente). |
 
 ---
 
@@ -364,6 +364,13 @@ Mapeamento explícito no CASE da proc `ENTRADA.Tipo`:
 - `ENTRADA.TIPOATEND` (códigos 0–13) **não possui** mapeamento encontrado em procs → **U** (se a fonte de tipos do novo dashboard é `TIPO` ou `TIPOATEND`).
 - **Fonte canônica de contagem (regra legada):** `ENTRADA` com `Fechado <> 'C' AND LoteEnt <> 'INAT'` (`SP_TabIndicador`, modo `MOVPACIENTE`). O filtro **`LoteEnt <> 'INAT'`** (lote não-INAT) é novo e relevante (RN-07).
 - Corrobora: `BI.BI_Atendimento.TipoAtendimento` (texto) usa as mesmas 6 classes (Consulta, Retorno, Exame, Clínico, Cirurgia, Pequeno Procedimento) — **H** de que deriva de `ENTRADA.Tipo`.
+
+**Fechamento técnico (T-08 — 2026-09-18, sessão de decisão):**
+- Mapeamento `TIPO` 1–6 **confirmado por evidência** (join `BI.BI_Atendimento` × `ENTRADA`, 2024): `1`=Consulta, `2`=Retorno, `3`=Exame, `4`=Pequeno Procedimento, `5`=Clínico, `6`=Cirurgia — coerente com o CASE da proc.
+- **Decisão:** `TIPO` é a fonte do tipo de atendimento (RN-08); `7`, `P`, `U`, `''`, `NULL` agrupados como **"Não classificado"**.
+- `TIPOATEND` (char(2), códigos 0–23, **padding inconsistente** — `4`×`04`, `7`×`07`) documentado; não usado como classe.
+- **Regra de contagem (RN-07) — decidida:** `Fechado <> 'C' AND LoteEnt <> 'INAT'` (2024 → 82.118; global exclui 73.786). Medições: `FECHADO` E=1.602.045/A=181.246/F=45.873/C=42.624/P=40.883/''=3/NULL=1; `LOTEENT` `'INAT'` exato=31.751, vazio/NULL=178.785 contados pela regra, interseção C∩`'INAT'`=589.
+- **Cobertura (RN-26/Q10) — decidida:** `CADCONVENIO.MODOFAT` `C`→Convênio, `P`→Particular, `S`→SUS; vazio/NULL→**"Não classificado"** (nunca assumir categoria).
 
 ### 13.3. Faturamento — fonte, referência e categorias
 

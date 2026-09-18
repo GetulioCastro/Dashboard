@@ -411,6 +411,17 @@ Definir em Dashboard.Core (sem dependências externas) os contratos de repositó
 **Descrição:**
 Implementar a consulta de Atendimentos conforme o contrato de dados (T-03) e a definição de "tipo de atendimento" (Q2). A query conta atendimentos no período filtrado, com filtro opcional por tipo e por categoria de cobertura Particular/Convênio/SUS (RN-08, RN-26), usando a data de atendimento como referência (RN-09). **As colunas exatas vêm do contrato — nada é presumido.**
 
+**Investigação técnica prévia (T-08 — 2026-09-18, sessão de decisão):**
+
+| Decisão | Definição |
+|---|---|
+| **Fonte canônica** | `dbo.ENTRADA` (mestre completo 1.912.675 linhas, 2005→2024 com dados, quase nada em 2025/2026). `DATAHORAENT` = data de referência (RN-09). `BI.BI_Atendimento` (648.705, 2018+) permanece como fonte de homologação/validação — não aplica a regra de contagem e não tem SUS. |
+| **Regra de contagem (RN-07)** | `Fechado <> 'C' AND LoteEnt <> 'INAT'` (= proc legada SP_TabIndicador/MOVPACIENTE). 2024: base 87.798 → regra 82.118 (exclui 5.680). Global: exclui 73.786 linhas (42.624 C + 31.751 INAT − 589 interseção). FECHADO: E=1.602.045/A=181.246/F=45.873/C=42.624/P=40.883. LOTEENT: 'INAT' exato=31.751, vazio/NULL=178.785 (contados). |
+| **Tipo de atendimento (RN-08/Q2)** | `ENTRADA.TIPO` como classe, mapeamento 1–6 **confirmado por join com rótulo do `BI.BI_Atendimento`** (2024): 1=Consulta, 2=Retorno, 3=Exame, 4=Pequeno Procedimento, 5=Clínico, 6=Cirurgia. `TIPO=7` (15.788, sem rótulo), `P`(3), `U`(1), `''`(2), `NULL`(1) → **"Não classificado"**. `TIPOATEND` (char(2), 24 valores, padding inconsistente) documentado, não usado como classe. |
+| **Cobertura (RN-26/Q10)** | `CADCONVENIO.MODOFAT`: `C`→Convênio (124 códigos — IAPEP, UNIMED, GEAP…), `P`→Particular (32 códigos — 029='PARTICULAR', 000='PARTICULAR INTERNACAO', 024/150=planos internos), `S`→SUS (3 códigos: 045/050/092). `MODOFAT` vazio (162 códigos) / NULL (2) → **"Não classificado"** — nunca assumir categoria. |
+| **Pendências fechadas** | **P15** (MODOFAT existe e é origem da classe de cobertura — confirmado); **P18** (distinção Particular/Convênio = MODOFAT, não vazio/nulo — confirmado). |
+| **Pendências abertas** | **P16** (como SisacHTML5 identifica "serviço atende SUS" — config de serviço/local não encontrada no legado); **P17** (CADCONVENIO no novo banco); **P19** (SUSPENSO/DATASUSP suficiente?). |
+
 **Critério de aceite (testável):**
 - [ ] Query retorna quantidade total de atendimentos no período (RN-07)
 - [ ] Filtro por tipo funciona conforme definição confirmada (Q2)
@@ -425,7 +436,10 @@ Implementar a consulta de Atendimentos conforme o contrato de dados (T-03) e a d
 
 **Riscos / pontos de atenção:**
 - **Bloqueado até T-02/T-03 concluídas** — contrato de dados e modelagem Atendimento/Consulta/Exame (Q2) são pré-requisitos
-- SUS só é considerado quando o serviço atender SUS (RN-26)
+- SUS só é considerado quando o serviço atender SUS (RN-26) — identificação técnica de "serviço atende SUS" permanece pendente (P16)
+- `CADCONVENIO` com 162 códigos sem `MODOFAT` (vazio) → "Não classificado" (decisão T-08); validar se há reclassificação no novo SisacHTML5
+- Fonte quase sem dados 2025/2026 (170 + 32 linhas em ENTRADA; 0 no BI) — período mês corrente (RN-04) pode retornar vazio (CA-09)
+- `TIPOATEND` tem padding inconsistente (`4`×`04`, `7`×`07`) — se futuro exigir granularidade, normalizar
 
 ---
 
@@ -942,7 +956,7 @@ Checkbox de resolução (marcar à medida que forem respondidas):
 | T-05   | Concluído | 2026-09-17 | — | Infraestrutura de acesso somente leitura implementada: `SqlConnectionFactory`/`ISqlConnectionFactory` (Dapper 2.1.86 + Microsoft.Data.SqlClient 7.0.3 em Dashboard.Data), DI em Program.cs (`SisacDatabase`), placeholder vazio em appsettings, `.gitignore` cobre appsettings locais; **build 0 avisos/0 erros**; teste de integração `factory_abre_conexao_com_banco_sisac_html5` em Dashboard.Data.Tests **executado com sucesso (1 teste, 0 falhas; SELECT 1)** com credencial via variável de ambiente; nenhum segredo gravado/commitado |
 | T-06   | Concluído | 2026-09-17 | — | Shell visual criado: `_Layout.cshtml` (Bootstrap 5.3.3 local, navegação padrão preservada), `Index.cshtml` com exatamente **seis placeholders** responsivos (Atendimentos, Consultas, Exames, Faturamento, Produção Médica, Despesas) no texto "Aguardando dados"; `Index.cshtml.cs` não alterado; sem dados/queries/gráficos/filtros/Services; **build 0 avisos/0 erros**; `GET /` = HTTP 200 sem exceção (stderr vazio); Bootstrap **local (sem CDN)**; sem novas dependências; infra T-05 intacta |
 | T-07   | Pendente | — | — | — |
-| T-08   | Pendente | — | — | — |
+| T-08   | Pendente | — | — | **Investigação técnica prévia concluída** (2026-09-18): sessão de decisão realizada; decisões registradas no bloco T-08 e em `dicionario-de-dados.md` (§13.2) / `contrato-dados-dashboard.md` (§7) / `PRD-001.md` (Nota §16, hist. 2.1); P15/P18 fechadas; aguarda implementação (criação de `AtendimentosRepository.cs` + `AtendimentosDto.cs`) |
 | T-09   | Pendente | — | — | — |
 | T-10   | Pendente | — | — | — |
 | T-11   | Pendente | — | — | — |

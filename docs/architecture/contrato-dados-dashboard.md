@@ -202,7 +202,7 @@ T-03 identifica as **estruturas físicas** que representam os conceitos de negó
 | Atributo | Valor | Status | Observação |
 |---|---|---|---|
 | Tabela de convênios | `dbo.CADCONVENIO` | **E** | ~597 registros; `CODCONVENIO varchar(10)`, `DESCR varchar(250)`, `SUSPENSO`, `MODOFAT`, etc. |
-| Campo de vínculo no atendimento | `ENTRADA.CODCONVENIO` | **E** | varchar(10); 315 códigos distintos em uso |
+| Campo de vínculo no atendimento | `ENTRADA.CODCONVENIO` | **E** | varchar(10); medido no CASAMATER (T-08): **123 códigos distintos** em uso, 1 NULL + 6 vazios (de 1.912.675) |
 | Campo de cobertura (BI antigo) | `dbo.BI_Atendimento.ModoFatura` | **E** | Valores: `CONVÊNIO`(620K), `PARTICULAR`(450K), `SUS`(17K) |
 | Campo de plano | `ENTRADA.PLANO` | **E** | varchar(50) |
 
@@ -210,17 +210,18 @@ T-03 identifica as **estruturas físicas** que representam os conceitos de negó
 
 | Cobertura | Identificação no legado | Status | Observação |
 |---|---|---|---|
-| **Particular** | `BI_Atendimento.ModoFatura = 'PARTICULAR'` ou `ENTRADA.CODCONVENIO` vazio/nulo | **E** | hipótese: se `CODCONVENIO` é vazio, é particular. Validar. |
-| **Convênio** | `ENTRADA.CODCONVENIO` preenchido + `CADCONVENIO.DESCR` | **E** | 315 códigos em uso |
-| **SUS** | `BI_Atendimento.ModoFatura = 'SUS'` | **E** | ~17K registros no BI antigo; 明らかに convênio SUS específico |
-| **SUS só quando serviço atende SUS** | **P** | A regra de negócio (RN-26) exige que SUS só apareça quando o serviço efetivamente atende SUS. No legado, não foi encontrada configuração por serviço/.local que indique "atende SUS". **Pendente** de identificação no SisacHTML5. |
+| **Particular** | `CADCONVENIO.MODOFAT = 'P'` | **Decidido (T-08)** | Evidência: `029`='PARTICULAR', `000`='PARTICULAR INTERNACAO', `024`/`150` = planos internos HTI. **Refutada** a hipótese "CODCONVENIO vazio = Particular" (só 7 linhas sem código em 1.912.675) |
+| **Convênio** | `CADCONVENIO.MODOFAT = 'C'` | **Decidido (T-08)** | 124 códigos cadastrados (IAPEP, UNIMED, GEAP...) |
+| **SUS** | `CADCONVENIO.MODOFAT = 'S'` | **Decidido (T-08)** | Exatamente 3 códigos: `045` (SUS TRANSPLANTE), `050` (SUS AMBULATORIO), `092` (SUS CARDIACO). Histórico: `BI_Atendimento.ModoFatura = 'SUS'` (~17K) |
+| **Sem categoria** | `MODOFAT` vazio (162 códigos) ou NULL (2) | **Decidido (T-08)** | → **"Não classificado"** — nunca assumir categoria |
+| **SUS só quando serviço atende SUS** | **P** | A regra de negócio (RN-26) exige que SUS só apareça quando o serviço efetivamente atende SUS. No legado, não foi encontrada configuração por serviço/.local que indique "atende SUS". **Pendente** de identificação no SisacHTML5. Operacionalmente (T-08) SUS = `MODOFAT='S'`. |
 
 ### 7.3. Pendências
 
-- [ ] **P15:** Confirmar se `MODOFAT` (Particular/Convênio/SUS) existe no SisacHTML5 ou se é derivado de outra forma.
+- [x] **P15:** Confirmar se `MODOFAT` (Particular/Convênio/SUS) existe no SisacHTML5 ou se é derivado de outra forma. — **Confirmado (T-08):** `CADCONVENIO.MODOFAT` existe e é a origem da classe de cobertura (correlação por código+DESCR com `BI.BI_Atendimento.ModoCobranca`, 2024).
 - [ ] **P16:** Investigar como o SisacHTML5 identifica que um serviço/local **atende SUS** (campo de configuração, cadastro do serviço, etc.).
 - [ ] **P17:** Confirmar se `CADCONVENIO` mantém a mesma estrutura no SisacHTML5.
-- [ ] **P18:** Determinar como o Dashboard distingue Particular de Convênio quando ambos usam `CODCONVENIO` — pode ser por campo `MODOFAT` ou por tipo de convênio.
+- [x] **P18:** Determinar como o Dashboard distingue Particular de Convênio quando ambos usam `CODCONVENIO` — pode ser por campo `MODOFAT` ou por tipo de convênio. — **Resolvido (T-08):** distinção por `CADCONVENIO.MODOFAT` (`C`/`P`/`S`); vazio/NULL → "Não classificado".
 - [ ] **P19:** Confirmar se `SUSPENSO`/`DATASUSP` de `CADCONVENIO` é suficiente para excluir convênios suspensos.
 
 ---
