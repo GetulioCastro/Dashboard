@@ -27,6 +27,7 @@
     "edit": {
       "**": "deny",
       ".opencode/**": "ask",
+      "Dashboard.Core/**": "allow",
       "docs/**": "allow",
       "**/AGENTS.md": "allow",
       "opencode.json": "allow"

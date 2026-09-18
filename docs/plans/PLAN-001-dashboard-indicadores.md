@@ -356,26 +356,36 @@ Ajustar o layout Razor Pages com Bootstrap 5 (via CDN ou libman), criar a estrut
 
 #### T-07 — Definir contratos e DTOs base dos indicadores em Dashboard.Core
 
-- **Status:** Pendente
+- **Status:** Concluído (2026-09-18) — build validado (0 avisos/0 erros)
 - **Complexidade:** Média
 - **Depende de:** T-02, T-03, T-04
-- **Implementa:** RN-42 *(filtro por período uniforme: atual/passado/futuro)*
+- **Implementa:** RN-42 *(filtro por período uniforme: atual/passado/futuro)*, RN-04, RN-26 *(cobertura)*
 - **Valida:** —
 - **Decisões base:** ADR-001, ADR-005 *(Core sem dependências)*, ADR-007 *(regras em Core)*
 - **Camadas/arquivos afetados:**
   - `Dashboard.Core/Contratos/IIndicatorRepository.cs` *(novo)*
-  - `Dashboard.Core/Contratos/IIndicatorRepository[T].cs` *(novo — se genéricos)*
   - `Dashboard.Core/DTOs/IndicatorData.cs` *(novo)*
   - `Dashboard.Core/DTOs/IndicatorFilter.cs` *(novo — período + cobertura)*
 
 **Descrição:**
 Definir em Dashboard.Core (sem dependências externas) os contratos de repositório e os DTOs base compartilhados: filtro (período atual/passado/futuro com datas inicial/final — RN-04, RN-42; categoria de cobertura — RN-26) e resultado (valor, período de referência de negócio, unidade). Nenhum DTO específico de indicador é criado **até** que o contrato de T-03 confirme a forma dos dados.
 
+> **Registro de execução (2026-09-18):**
+> - **Criados (3 arquivos, nenhum outro):**
+>   - `Dashboard.Core/Contratos/IIndicatorRepository.cs` — interface única `IIndicatorRepository` com `Task<IndicatorData> GetIndicatorAsync(IndicatorFilter filter, CancellationToken cancellationToken = default)`. Sem SQL, conexão, Dapper, tabela ou procedure; `CancellationToken` (BCL) respalda o cancelamento controlado de RN-43.
+>   - `Dashboard.Core/DTOs/IndicatorFilter.cs` — `IndicatorFilter` (período + datas + cobertura) e os enums `PeriodType` (`Current`, `Past`, `Future` — RN-04/RN-42) e `CoverageCategory` (`Particular`, `Convenio`, `Sus` — RN-26). `Coverage` opcional (nullable) porque cobertura aplica-se aos assistenciais e Produção, não a Faturamento/Despesas. Datas como `DateOnly?` (representação de domínio, sem infraestrutura); para `Past`/`Future` carregam início/fim (CA-15), para `Current` ficam vazias e o "período calendário corrente" é resolvido na execução (RN-04). **Validação deliberadamente NÃO incluída** — está prevista no T-17 ("`IndicatorFilter.cs` *(editado — validação do filtro)*").
+>   - `Dashboard.Core/DTOs/IndicatorData.cs` — `IndicatorData` (`Value` decimal, `ReferencePeriod` tipo `BusinessReferencePeriod(DateOnly Start, DateOnly End)`, `UnitOfMeasure` string) e o record struct `BusinessReferencePeriod` (período de referência de negócio — RN-42/CA-01). `Value` decimal cobre tanto contagens (RN-07/CA-03) quanto valores monetários (RN-12, RN-05). Unidade como texto livre porque o T-03 ainda não confirmou as unidades técnicas (ex.: unidade de produção médica — P29) — evita catálogo fechado inventado.
+> - **`IIndicatorRepository[T].cs` NÃO foi criado.** Justificativa: os seis indicadores do MVP compartilham o mesmo resultado base (`IndicatorData`) e o mesmo filtro (`IndicatorFilter`); uma interface genérica apenas carregaria `T = IndicatorData` como marcador, sem adicionar capacidade — criar DTOs/marcadores por indicador agora violaria "nenhum DTO específico de indicador" (a forma por indicador depende de T-03). Se surgir necessidade real de tipagem por indicador, adiciona-se na Fase 3 com validação.
+> - **Sem dependências externas:** `Dashboard.Core.csproj` permanece sem `PackageReference` e sem `ProjectReference` (ADR-005); referências preservadas Web → Core, Web → Data, Data → Core.
+> - **Nenhum campo inventado:** todas as propriedades derivam das fontes obrigatórias (PRD-001 RN-04/RN-26/RN-42; contrato de dados T-03; ADR-005/ADR-007; dicionário §14.9). Cobertura não filtra Faturamento/Despesas (RN-26 limita a assistenciais e Produção) — por isso `Coverage` é opcional no filtro.
+> - **Build:** `dotnet build Dashboard.slnx` — **0 avisos, 0 erros** (Dashboard.Core, Dashboard.Data, Dashboard.Data.Tests, Dashboard.Web).
+> - **Sem SQL, sem banco, sem alteração em Dashboard.Web, sem commit/push.**
+
 **Critério de aceite (testável):**
-- [ ] Contratos e DTOs base compilam sem dependências externas no projeto Core
-- [ ] Filtro suporta período atual/passado/futuro e categoria de cobertura
-- [ ] Resultado carrega valor + período de referência de negócio + unidade de medida
-- [ ] Nenhum DTO específico inventa campo sem respaldo no contrato de T-03
+- [x] Contratos e DTOs base compilam sem dependências externas no projeto Core
+- [x] Filtro suporta período atual/passado/futuro e categoria de cobertura
+- [x] Resultado carrega valor + período de referência de negócio + unidade de medida
+- [x] Nenhum DTO específico inventa campo sem respaldo no contrato de T-03
 
 **Testes a escrever:**
 - *Não aplicável* — criação de contratos. Testes das implementações entram nas tarefas seguintes.
