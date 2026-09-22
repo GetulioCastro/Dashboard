@@ -1,0 +1,19 @@
+@model List<IndicadorDemonstracao>
+@using Dashboard.Web.Dados
+
+<nav class="menu-lateral h-100" aria-label="Menu lateral">
+    <ul class="nav flex-column gap-1 py-3 px-2">
+        <li class="nav-item">
+            <a class="nav-link active" asp-area="" asp-page="/Index" data-menu="dashboard">Dashboard</a>
+        </li>
+        <li class="nav-item">
+            <span class="nav-section">Indicadores</span>
+        </li>
+        @foreach (var indicador in Model)
+        {
+            <li class="nav-item">
+                <a class="nav-link" href="#card-@indicador.Id" data-menu-indicador="@indicador.Id">@indicador.Nome</a>
+            </li>
+        }
+    </ul>
+</nav>

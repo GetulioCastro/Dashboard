@@ -28,6 +28,9 @@
       "**": "deny",
       ".opencode/**": "ask",
       "Dashboard.Core/**": "allow",
+      "Dashboard.Data/**": "allow",
+      "Dashboard.Data.Tests/**": "allow",
+      "Dashboard.Web/**": "allow",
       "docs/**": "allow",
       "**/AGENTS.md": "allow",
       "opencode.json": "allow"

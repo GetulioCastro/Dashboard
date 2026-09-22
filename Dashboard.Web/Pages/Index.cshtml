@@ -3,41 +3,112 @@
 @{
     ViewData["Title"] = "Dashboard de Indicadores";
 
-    var indicadores = new[]
-    {
-        "Atendimentos",
-        "Consultas",
-        "Exames",
-        "Faturamento",
-        "Produção Médica",
-        "Despesas"
-    };
+    var referencia = Model.Indicadores.FirstOrDefault()?.Referencia ?? string.Empty;
+}
+
+@section MenuLateral {
+    <partial name="_MenuLateral" model="Model.Indicadores" />
 }
 
 <div class="py-4">
-    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-4">
+    <noscript>
+        <div class="alert alert-warning" role="alert">Este dashboard depende de JavaScript para renderizar os gráficos.</div>
+    </noscript>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
         <div>
             <h1 class="h3 mb-1">Dashboard de Indicadores</h1>
             <p class="text-muted mb-0">
-                Visão geral dos indicadores do MVP. Os valores serão exibidos quando as consultas de dados forem implementadas.
+                Visão demonstrativa dos indicadores. Sem integração com banco de dados.
             </p>
         </div>
-        <span class="badge text-bg-secondary align-self-start">Aguardando implementação dos dados</span>
+        <span class="badge text-bg-secondary align-self-start">Referência: @referencia</span>
     </div>
 
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
-        @foreach (var indicador in indicadores)
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-6 col-md-3">
+                    <label for="filtro-inicio" class="form-label small mb-1">Data Inicial</label>
+                    <input type="date" class="form-control form-control-sm" id="filtro-inicio" />
+                </div>
+                <div class="col-6 col-md-3">
+                    <label for="filtro-fim" class="form-label small mb-1">Data Final</label>
+                    <input type="date" class="form-control form-control-sm" id="filtro-fim" />
+                </div>
+                <div class="col-12 col-md-6 d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-sm btn-primary" id="btn-aplicar">Aplicar</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-periodo="mes">Mês atual</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-periodo="90d">Últimos 90 dias</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-periodo="ano">Ano atual</button>
+                </div>
+            </div>
+            <div class="mt-2 small text-secondary" id="filtro-info"></div>
+            <div class="alert alert-danger py-2 d-none mt-2 mb-0" id="filtro-alerta" role="alert"></div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="text-muted small">
+            <span id="qtd-selecionados">0</span> indicador(es) selecionado(s)
+        </span>
+        <span class="badge text-bg-light border" id="status-periodo"></span>
+    </div>
+
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-4">
+        @foreach (var indicador in Model.Indicadores)
         {
             <div class="col">
-                <section class="card h-100 shadow-sm" aria-label="@indicador">
-                    <div class="card-body d-flex flex-column">
-                        <h2 class="h5 card-title mb-0">@indicador</h2>
-                        <div class="border border-2 border-secondary-subtle rounded-3 bg-body-secondary text-muted d-flex align-items-center justify-content-center text-center py-5 mt-3 flex-grow-1">
-                            <span class="small">Aguardando dados</span>
+                <section class="card h-100 shadow-sm ind-card" id="card-@indicador.Id" data-indicador="@indicador.Id" aria-label="@indicador.Nome">
+                    <div class="card-header bg-white d-flex align-items-center justify-content-between gap-2">
+                        <h2 class="h6 card-title mb-0">@indicador.Nome</h2>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="form-check form-switch m-0">
+                                <input class="form-check-input chk-selecionar" type="checkbox" role="switch"
+                                       id="sel-@indicador.Id" aria-label="Selecionar @indicador.Nome" />
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-maximizar"
+                                    data-indicador="@indicador.Id" aria-label="Maximizar @indicador.Nome">Maximizar</button>
                         </div>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex align-items-baseline gap-2 mb-2">
+                            <span class="ind-valor" data-valor="@indicador.Id">@indicador.ValorReferencia.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)</span>
+                            <span class="ind-unidade small">@indicador.Unidade</span>
+                        </div>
+                        <div class="grafico flex-grow-1" data-grafico="@indicador.Id">
+                            <svg viewBox="0 0 220 170" role="img" aria-label="Gráfico de @indicador.Nome"></svg>
+                        </div>
+                        <div class="small text-muted mt-2" data-referencia-caption="@indicador.Id">Período: mês corrente</div>
                     </div>
                 </section>
             </div>
         }
     </div>
 </div>
+
+<div class="modal fade" id="modal-maximizado" tabindex="-1" aria-labelledby="modal-titulo" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="modal-titulo">Indicador</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <div>
+                        <span class="ind-valor" id="modal-valor"></span>
+                        <span class="ind-unidade" id="modal-unidade"></span>
+                    </div>
+                    <span class="small text-muted" id="modal-periodo"></span>
+                </div>
+                <div class="grafico-max" id="modal-grafico"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar ao Dashboard</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="application/json" id="dados-indicadores">@Html.Raw(Model.DadosJson)</script>

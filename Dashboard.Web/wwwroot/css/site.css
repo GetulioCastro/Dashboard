@@ -29,3 +29,90 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+.menu-lateral {
+  position: sticky;
+  top: 1rem;
+}
+
+.menu-lateral .nav-link {
+  border-radius: 0.375rem;
+  color: var(--bs-secondary-color);
+  padding: 0.45rem 0.75rem;
+}
+
+.menu-lateral .nav-link:hover {
+  background: var(--bs-tertiary-bg);
+  color: var(--bs-body-color);
+}
+
+.menu-lateral .nav-link.active {
+  background: var(--bs-primary);
+  color: #fff;
+}
+
+.menu-lateral .nav-section {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--bs-secondary-color);
+  padding: 0.75rem 0.75rem 0.25rem;
+}
+
+.ind-card.selecionado {
+  outline: 3px solid var(--bs-primary);
+  outline-offset: 2px;
+}
+
+.ind-valor {
+  font-size: 1.45rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.ind-unidade {
+  color: var(--bs-secondary-color);
+}
+
+.grafico {
+  width: 100%;
+  min-height: 180px;
+}
+
+.grafico svg {
+  width: 100%;
+  height: auto;
+  max-height: 200px;
+  display: block;
+}
+
+.grafico-vazio {
+  min-height: 170px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--bs-secondary-color);
+  border: 1px dashed var(--bs-border-color);
+  border-radius: 0.5rem;
+}
+
+.grafico-max svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+@keyframes ind-flash {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(13, 110, 253, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(13, 110, 253, 0.35);
+  }
+}
+
+.ind-card.destaque {
+  animation: ind-flash 1s ease 2;
+}
