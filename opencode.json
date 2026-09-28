@@ -28,11 +28,15 @@
       "**": "deny",
       ".opencode/**": "ask",
       "Dashboard.Core/**": "allow",
+      "Dashboard.Core.Tests/**": "allow",
+      "Dashboard.slnx": "allow",
       "Dashboard.Data/**": "allow",
       "Dashboard.Data.Tests/**": "allow",
       "Dashboard.Web/**": "allow",
       "docs/**": "allow",
       "**/AGENTS.md": "allow",
+      "AGENTS.md": "allow",
+      ".gitignore": "allow",
       "opencode.json": "allow"
     },
     "bash": {

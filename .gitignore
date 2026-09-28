@@ -13,7 +13,14 @@ build/
 coverage/
 
 # OpenCode
-.opencode
+.opencode/node_modules/
+.opencode/package.json
+.opencode/package-lock.json
+.opencode/.gitignore
+
+# .NET (artefatos de build)
+bin/
+obj/
 
 # Credenciais locais (connection strings nunca versionadas)
 appsettings.*.local.json
