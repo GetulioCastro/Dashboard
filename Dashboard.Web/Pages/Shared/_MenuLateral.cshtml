@@ -19,7 +19,10 @@
         <li class="nav-item">
             <a class="nav-link @(paginaAtual == "consultas" ? "active" : "")" asp-area="" asp-page="/Consultas">Consultas</a>
         </li>
-        @foreach (var indicador in indicadores.Where(i => i.Nome != "Atendimentos" && i.Nome != "Consultas"))
+        <li class="nav-item">
+            <a class="nav-link @(paginaAtual == "exames" ? "active" : "")" asp-area="" asp-page="/Exames">Exames</a>
+        </li>
+        @foreach (var indicador in indicadores.Where(i => i.Nome != "Atendimentos" && i.Nome != "Consultas" && i.Nome != "Exames"))
         {
             <li class="nav-item">
                 <a class="nav-link" href="#card-@indicador.Id" data-menu-indicador="@indicador.Id">@indicador.Nome</a>

@@ -14,6 +14,8 @@ builder.Services.AddScoped<IIndicadorVisaoRepository, AtendimentosVisaoRepositor
 
 builder.Services.AddScoped<ConsultasVisaoRepository>();
 
+builder.Services.AddScoped<ExamesVisaoRepository>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
