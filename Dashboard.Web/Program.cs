@@ -12,6 +12,8 @@ builder.Services.AddSingleton<ISqlConnectionFactory>(
 
 builder.Services.AddScoped<IIndicadorVisaoRepository, AtendimentosVisaoRepository>();
 
+builder.Services.AddScoped<ConsultasVisaoRepository>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

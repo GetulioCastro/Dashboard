@@ -3,11 +3,12 @@ using System.Text.Json.Serialization;
 using Dashboard.Core.Contratos;
 using Dashboard.Core.DTOs;
 using Dashboard.Core.Regras;
+using Dashboard.Data.Repositories;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Dashboard.Web.Pages;
 
-public class AtendimentosModel : PageModel
+public class ConsultasModel : PageModel
 {
     private const int DiasPadraoRetroativos = 89;
 
@@ -16,10 +17,10 @@ public class AtendimentosModel : PageModel
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
     };
 
-    private readonly IIndicadorVisaoRepository _visaoRepository;
-    private readonly ILogger<AtendimentosModel> _logger;
+    private readonly ConsultasVisaoRepository _visaoRepository;
+    private readonly ILogger<ConsultasModel> _logger;
 
-    public AtendimentosModel(IIndicadorVisaoRepository visaoRepository, ILogger<AtendimentosModel> logger)
+    public ConsultasModel(ConsultasVisaoRepository visaoRepository, ILogger<ConsultasModel> logger)
     {
         _visaoRepository = visaoRepository;
         _logger = logger;
@@ -59,7 +60,7 @@ public class AtendimentosModel : PageModel
         {
             _logger.LogError(
                 erro,
-                "Falha ao consultar a visao do indicador de Atendimentos. Dimensao={Dimensao} Forma={Forma} Inicio={Inicio} Fim={Fim}",
+                "Falha ao consultar a visao do indicador de Consultas. Dimensao={Dimensao} Forma={Forma} Inicio={Inicio} Fim={Fim}",
                 dimensao,
                 forma,
                 filtro.StartDate,

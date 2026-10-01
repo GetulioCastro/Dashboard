@@ -87,6 +87,23 @@ body {
   display: block;
 }
 
+.grafico-visao {
+  width: 100%;
+  min-height: 180px;
+}
+
+.grafico-visao svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: clamp(240px, 45vh, 420px);
+}
+
+.grafico-visao-rosca {
+  max-width: 480px;
+  margin-inline: auto;
+}
+
 .grafico-vazio {
   min-height: 170px;
   display: flex;

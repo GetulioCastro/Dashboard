@@ -1,18 +1,25 @@
-@model List<IndicadorDemonstracao>
+@model List<IndicadorDemonstracao>?
 @using Dashboard.Web.Dados
+@{
+    var paginaAtual = ViewData["MenuPaginaAtual"] as string ?? "dashboard";
+    var indicadores = Model ?? new List<IndicadorDemonstracao>();
+}
 
 <nav class="menu-lateral h-100" aria-label="Menu lateral">
     <ul class="nav flex-column gap-1 py-3 px-2">
         <li class="nav-item">
-            <a class="nav-link active" asp-area="" asp-page="/Index" data-menu="dashboard">Dashboard</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" asp-area="" asp-page="/Atendimentos">Atendimentos</a>
+            <a class="nav-link @(paginaAtual == "dashboard" ? "active" : "")" asp-area="" asp-page="/Index" data-menu="dashboard">Dashboard</a>
         </li>
         <li class="nav-item">
             <span class="nav-section">Indicadores</span>
         </li>
-        @foreach (var indicador in Model)
+        <li class="nav-item">
+            <a class="nav-link @(paginaAtual == "atendimentos" ? "active" : "")" asp-area="" asp-page="/Atendimentos">Atendimentos</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(paginaAtual == "consultas" ? "active" : "")" asp-area="" asp-page="/Consultas">Consultas</a>
+        </li>
+        @foreach (var indicador in indicadores.Where(i => i.Nome != "Atendimentos" && i.Nome != "Consultas"))
         {
             <li class="nav-item">
                 <a class="nav-link" href="#card-@indicador.Id" data-menu-indicador="@indicador.Id">@indicador.Nome</a>
