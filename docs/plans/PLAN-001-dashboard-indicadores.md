@@ -398,15 +398,17 @@ Definir em Dashboard.Core (sem dependências externas) os contratos de repositó
 
 #### T-08 — Implementar query de Atendimentos em Dashboard.Data
 
-- **Status:** Pendente
+- **Status:** Implementado (2026-09-18) — aguarda validação dos testes de integração com a credencial de leitura (`ConnectionStrings__SisacDatabase`) para fechamento
 - **Complexidade:** Média
 - **Depende de:** T-05, T-07
 - **Implementa:** RN-07, RN-08, RN-09, RN-26 *(cobertura)*
 - **Valida:** CA-03, CA-09, CA-18
 - **Decisões base:** ADR-003, ADR-008
 - **Camadas/arquivos afetados:**
+  - `Dashboard.Core/Regras/PeriodoResolutor.cs` *(novo — resolução de período em Core, reutilizável em T-09..T-13)*
+  - `Dashboard.Core/DTOs/IndicatorFilter.cs` *(editado — adição de `TipoAtendimento` enum + `Tipo` nullable)*
   - `Dashboard.Data/Repositories/AtendimentosRepository.cs` *(novo)*
-  - `Dashboard.Core/DTOs/AtendimentosDto.cs` *(novo — forma confirmada em T-03)*
+  - `Dashboard.Data.Tests/Repositories/AtendimentosRepositoryTests.cs` *(novo — CA_03, CA_18, ca09)*
 
 **Descrição:**
 Implementar a consulta de Atendimentos conforme o contrato de dados (T-03) e a definição de "tipo de atendimento" (Q2). A query conta atendimentos no período filtrado, com filtro opcional por tipo e por categoria de cobertura Particular/Convênio/SUS (RN-08, RN-26), usando a data de atendimento como referência (RN-09). **As colunas exatas vêm do contrato — nada é presumido.**
@@ -423,11 +425,25 @@ Implementar a consulta de Atendimentos conforme o contrato de dados (T-03) e a d
 | **Pendências abertas** | **P16** (como SisacHTML5 identifica "serviço atende SUS" — config de serviço/local não encontrada no legado); **P17** (CADCONVENIO no novo banco); **P19** (SUSPENSO/DATASUSP suficiente?). |
 
 **Critério de aceite (testável):**
-- [ ] Query retorna quantidade total de atendimentos no período (RN-07)
-- [ ] Filtro por tipo funciona conforme definição confirmada (Q2)
-- [ ] Filtro por cobertura funciona (RN-26)
-- [ ] Data de referência é a data de atendimento, não a de lançamento (RN-09)
-- [ ] Período sem registros retorna estado vazio (CA-09)
+- [x] Query retorna quantidade total de atendimentos no período (RN-07) — implementado (regra `Fechado <> 'C' AND COALESCE(LoteEnt,'') <> 'INAT'`); validação via teste de integração `CA_03` (pendente de credencial)
+- [x] Filtro por tipo funciona conforme definição confirmada (Q2) — implementado (mapeamento `TIPO` 1–6; `NaoClassificado` = TIPO fora de 1..6 ou NULL/`''`)
+- [x] Filtro por cobertura funciona (RN-26) — implementado (join `CADCONVENIO.MODOFAT` C/P/S); validação via teste de integração `CA_18`
+- [x] Data de referência é a data de atendimento, não a de lançamento (RN-09) — `DATAHORAENT` definido como limite do período
+- [ ] Período sem registros retorna estado vazio (CA-09) — teste `atendimentos_periodo_sem_dados_retorna_vazio_ca09` escrito (período futuro 2040, espera `Value == 0`); validação pendente de credencial
+
+> **Registro de execução (2026-09-18):**
+> - **Criados:**
+>   - `Dashboard.Core/Regras/PeriodoResolutor.cs` — resolução do período de negócio em **Core** (ADR-007): `Current` = mês calendário corrente resolvido na execução (RN-04), `Past`/`Future` usam `StartDate`/`EndDate` incluindo-os (RN-42); datas invertidas ou ausentes lançam `ArgumentException`. Reutilizável por T-09..T-13. Sem dependências externas (ADR-005).
+>   - `Dashboard.Data/Repositories/AtendimentosRepository.cs` — implementa `IIndicatorRepository`. SQL dinâmico com `DynamicParameters` (Dapper), **sem nenhum método de escrita** (ADR-003). Contagem = `COUNT(1)` sobre `dbo.ENTRADA` com `FECHADO <> 'C' AND COALESCE(LoteEnt,'') <> 'INAT'` (RN-07), limite de período em `DATAHORAENT` semiaberto `[início; fim+1)` (RN-09), filtro de tipo por `E.TIPO` (RN-08/Q2) e de cobertura por `INNER JOIN dbo.CADCONVENIO C ON C.CODCONVENIO = E.CODCONVENIO` com `C.MODOFAT = 'P'/'C'/'S'` (RN-26). `CancellationToken` propagado via `CommandDefinition`.
+>   - `Dashboard.Data.Tests/Repositories/AtendimentosRepositoryTests.cs` — 3 testes de integração conforme a convenção `CA_XX_*`.
+> - **AtendimentosDto NÃO foi criado.** A forma confirmada (T-03/T-07) é uma **contagem única** por filtro — o DTO esvaziado apenas duplicaria `IndicatorData` (mesma justificativa do registro de T-07). Se a exibição exigir quebra por tipo/cobertura, adiciona-se o DTO específico na Fase 4 com validação.
+> - **`TipoAtendimento` no filtro:** `IndicatorFilter.Tipo` (nullable `TipoAtendimento`) e o enum foram adicionados a `Dashboard.Core/DTOs/IndicatorFilter.cs` para sustentar o filtro de tipo (RN-08).
+> - **Refinamento deliberado vs. proc legada:** regra literal `LoteEnt <> 'INAT'` excluiria a linha com `LoteEnt` NULL; a investigação T-08 registrou **"vazio/NULL = contados pela regra"** — por isso `COALESCE(LoteEnt,'') <> 'INAT'`, mantendo o comportamento documentado. Sinalizado para review (P3 segue aberto).
+> - **Build:** `dotnet build Dashboard.slnx` — **0 avisos, 0 erros**.
+> - **Testes:** `dotnet test Dashboard.Data.Tests` — 4 falhas **somente por lacuna de credencial** (3 novos + o `factory_abre_conexao_com_banco_sisac_html5` da T-05), com mensagem padrão de configuração da variável `ConnectionStrings__SisacDatabase`. **Nenhum resultado inventado**; a validação real depende da credencial de leitura.
+> - **Sem alterações em `Dashboard.Web`; sem SQL/banco alterado; sem commit/push.`
+
+> **Decisão R-01 (2026-09-21 — gate humana):** adotada a **Opção A — regra literal** `Fechado <> 'C' AND LoteEnt <> 'INAT'`. `LoteEnt` NULL **não é contabilizado** (janela 2024 = 82.118). A implementação do `AtendimentosRepository` e o contador do teste de integração foram alinhados ao literal (remoção do `COALESCE`). A **âncora independente de evidência** (R-04) e as demais pendências (R-02, R-05) permanecem em aberto — o **Status do T-08 não é alterado** nesta etapa.
 
 **Testes a escrever:**
 - *Integration:* `CA_03_atendimentos_por_periodo_retorna_quantidade_correta`
@@ -955,8 +971,8 @@ Checkbox de resolução (marcar à medida que forem respondidas):
 | T-04   | Concluído | 2026-09-17 | — | Fundação estrutural criada: Dashboard.Core e Dashboard.Data (net10.0, vazios, Nullable/ImplicitUsings), adicionados ao Dashboard.slnx; referências Web→Core, Web→Data, Data→Core; Core sem PackageReference/referências; build 0 avisos/0 erros |
 | T-05   | Concluído | 2026-09-17 | — | Infraestrutura de acesso somente leitura implementada: `SqlConnectionFactory`/`ISqlConnectionFactory` (Dapper 2.1.86 + Microsoft.Data.SqlClient 7.0.3 em Dashboard.Data), DI em Program.cs (`SisacDatabase`), placeholder vazio em appsettings, `.gitignore` cobre appsettings locais; **build 0 avisos/0 erros**; teste de integração `factory_abre_conexao_com_banco_sisac_html5` em Dashboard.Data.Tests **executado com sucesso (1 teste, 0 falhas; SELECT 1)** com credencial via variável de ambiente; nenhum segredo gravado/commitado |
 | T-06   | Concluído | 2026-09-17 | — | Shell visual criado: `_Layout.cshtml` (Bootstrap 5.3.3 local, navegação padrão preservada), `Index.cshtml` com exatamente **seis placeholders** responsivos (Atendimentos, Consultas, Exames, Faturamento, Produção Médica, Despesas) no texto "Aguardando dados"; `Index.cshtml.cs` não alterado; sem dados/queries/gráficos/filtros/Services; **build 0 avisos/0 erros**; `GET /` = HTTP 200 sem exceção (stderr vazio); Bootstrap **local (sem CDN)**; sem novas dependências; infra T-05 intacta |
-| T-07   | Pendente | — | — | — |
-| T-08   | Pendente | — | — | **Investigação técnica prévia concluída** (2026-09-18): sessão de decisão realizada; decisões registradas no bloco T-08 e em `dicionario-de-dados.md` (§13.2) / `contrato-dados-dashboard.md` (§7) / `PRD-001.md` (Nota §16, hist. 2.1); P15/P18 fechadas; aguarda implementação (criação de `AtendimentosRepository.cs` + `AtendimentosDto.cs`) |
+| T-07   | Concluído | 2026-09-18 | `8f9fc6d` | Contratos e DTOs base criados em Dashboard.Core (Core sem dependências — ADR-005): `IIndicatorRepository`, `IndicatorFilter` (período RN-04/42 + cobertura RN-26) e `IndicatorData` (`Value`/`ReferencePeriod`/`UnitOfMeasure`); interface genérica por indicador deliberadamente não criada; build 0 avisos/0 erros |
+| T-08   | Implementado (validação pendente) | 2026-09-18 | — | Investigação técnica T-08 commitada (`5e340cf`); implementação: `AtendimentosRepository` (`ENTRADA`, contagem RN-07 com `COALESCE(LoteEnt,'') <> 'INAT'`, `DATAHORAENT` RN-09, tipo `TIPO` 1–6 + "Não classificado" RN-08, cobertura `CADCONVENIO.MODOFAT` C/P/S RN-26), `PeriodoResolutor` em Core (RN-04/RN-42) e 3 testes de integração `CA_03`/`CA_18`/`ca09`; build 0 avisos/0 erros; testes falham apenas por lacuna de credencial `ConnectionStrings__SisacDatabase` (nenhum resultado inventado); `AtendimentosDto` não criado (forma = contagem única, coberta por `IndicatorData`) |
 | T-09   | Pendente | — | — | — |
 | T-10   | Pendente | — | — | — |
 | T-11   | Pendente | — | — | — |

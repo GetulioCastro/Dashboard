@@ -207,7 +207,7 @@ flowchart TD
 
 - **RN-26:** Os indicadores assistenciais (Atendimentos, Consultas, Exames) e a Produção Médica devem permitir análise pela **categoria/cobertura**:
   - **Particular**
-  - **Convênio** (efetivamente cadastrado no novo SisacHTML5)
+  - **Convênio** (efetivamente cadastrado no novo SisacHTML5) — convênio **suspenso** não conta como efetivamente cadastrado
   - **SUS**, somente quando o serviço de saúde atender SUS
   - Não se assume códigos, nomes ou estruturas do banco legado como contrato.
 - **RN-27:** Os indicadores devem permitir diferentes formas de **visualização** — linhas, colunas e pizza — quando semanticamente adequadas ao conjunto de dados. A escolha do gráfico **não** é regra de negócio; é responsabilidade da apresentação (Dashboard.Web).
@@ -216,6 +216,12 @@ flowchart TD
 - **RN-43:** Consultas históricas potencialmente **pesadas ou inviáveis** devem ser tratadas de forma **controlada**, informando o usuário e permitindo cancelamento/ajuste/tentativa, sem experiência indefinida ou travamento silencioso. (Implementação não faz parte dos documentos de regra; é requisito de produto documentado.)
 - **RN-44:** O histórico de **2025 e anos anteriores** presente no banco novo será utilizado para **homologação e demonstração** dos indicadores. O filtro por período é o mecanismo central de operação e de validação dos dados históricos.
 - **RN-45:** **Unidade** como dimensão/filtro **não faz parte do MVP** — é evolução futura, condicionada à modelagem efetiva no novo SisacHTML5. Não se copia a hierarquia `LOCAL` do legado.
+
+> **Nota (decisão de produto P19 — 2026-09-28):** a cobertura **Convênio** (RN-26) considera
+> **efetivamente cadastrado** apenas o convênio **não suspenso**. Convênio com suspensão ativa é
+> excluído da categoria Convênio. Esta é uma decisão de **negócio** e não fixa forma técnica: os
+> campos, valores e o predicado que a implementam no SisacHTML5 não são definidos por esta nota
+> (vide `docs/architecture/contrato-dados-dashboard.md` §7.3, P19).
 
 ## 9. Critérios de aceite
 

@@ -1,4 +1,6 @@
+using Dashboard.Core.Contratos;
 using Dashboard.Data.Connections;
+using Dashboard.Data.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +9,8 @@ builder.Services.AddRazorPages();
 
 builder.Services.AddSingleton<ISqlConnectionFactory>(
     new SqlConnectionFactory(builder.Configuration.GetConnectionString("SisacDatabase")));
+
+builder.Services.AddScoped<IIndicadorVisaoRepository, AtendimentosVisaoRepository>();
 
 var app = builder.Build();
 

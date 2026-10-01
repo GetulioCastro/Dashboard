@@ -369,7 +369,7 @@ Mapeamento explícito no CASE da proc `ENTRADA.Tipo`:
 - Mapeamento `TIPO` 1–6 **confirmado por evidência** (join `BI.BI_Atendimento` × `ENTRADA`, 2024): `1`=Consulta, `2`=Retorno, `3`=Exame, `4`=Pequeno Procedimento, `5`=Clínico, `6`=Cirurgia — coerente com o CASE da proc.
 - **Decisão:** `TIPO` é a fonte do tipo de atendimento (RN-08); `7`, `P`, `U`, `''`, `NULL` agrupados como **"Não classificado"**.
 - `TIPOATEND` (char(2), códigos 0–23, **padding inconsistente** — `4`×`04`, `7`×`07`) documentado; não usado como classe.
-- **Regra de contagem (RN-07) — decidida:** `Fechado <> 'C' AND LoteEnt <> 'INAT'` (2024 → 82.118; global exclui 73.786). Medições: `FECHADO` E=1.602.045/A=181.246/F=45.873/C=42.624/P=40.883/''=3/NULL=1; `LOTEENT` `'INAT'` exato=31.751, vazio/NULL=178.785 contados pela regra, interseção C∩`'INAT'`=589.
+- **Regra de contagem (RN-07) — decidida (R-01, 2026-09-21):** `Fechado <> 'C' AND LoteEnt <> 'INAT'` — **Regra literal** (2024 → 82.118; global exclui 73.786). **Decisão humana:** `LoteEnt` NULL **NÃO é contabilizado** (em T-SQL, `NULL <> 'INAT'` é `UNKNOWN` → linha excluída); `LoteEnt = ''` (vazio) **é contabilizado** (`'' <> 'INAT'` é verdadeiro). Medições: `FECHADO` E=1.602.045/A=181.246/F=45.873/C=42.624/P=40.883/''=3/NULL=1; `LOTEENT` `'INAT'` exato=31.751, vazio=5.293 contados pela regra, NULL≈173.492 **não contabilizados** (janela 2024: NULL=1), interseção C∩`'INAT'`=589.
 - **Cobertura (RN-26/Q10) — decidida:** `CADCONVENIO.MODOFAT` `C`→Convênio, `P`→Particular, `S`→SUS; vazio/NULL→**"Não classificado"** (nunca assumir categoria).
 
 ### 13.3. Faturamento — fonte, referência e categorias
