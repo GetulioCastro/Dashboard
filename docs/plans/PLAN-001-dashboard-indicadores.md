@@ -398,7 +398,8 @@ Definir em Dashboard.Core (sem dependências externas) os contratos de repositó
 
 #### T-08 — Implementar query de Atendimentos em Dashboard.Data
 
-- **Status:** Implementado (2026-09-18) — aguarda validação dos testes de integração com a credencial de leitura (`ConnectionStrings__SisacDatabase`) para fechamento
+- **Status:** Implementado e Validado (reconciliado 2026-10-02)
+> **Nota de reconciliação (2026-10-02):** Reconciliação documental autoriza o fechamento do estado do T-08. Os registros de review/handoffs anteriores permanecem como históricos. R-01–R-05 foram reconciliados conforme definido no handoff `docs/handoffs/2026-10-02-reconciliacao-workflow-t08-vertical-slices.md`.
 - **Complexidade:** Média
 - **Depende de:** T-05, T-07
 - **Implementa:** RN-07, RN-08, RN-09, RN-26 *(cobertura)*

@@ -23,12 +23,14 @@
 | Plano | PLAN-001 (T-01..T-21) | Execução em andamento |
 | Revisão | REVIEW-T-08-2026-09-18 | Aprovado com ressalvas |
 
+> **Nota de reconciliação (2026-10-02):** Reconciliação documental do estado do workflow realizada sem alterar documentos históricos.
+
 ## 3. Tarefas
 | Tarefa | Status | Próxima ação |
 |---|---|---|
 | T-01..T-07 | Concluído | — |
-| **T-08** | **Implementado (validação pendente)** | Integrados CA-03/CA-09/CA-18 travados por R-05 |
-| T-09..T-13, T-19 | Pendente | Elegíveis por dependência — ver §6, tensão não resolvida |
+| **T-08** | **Implementado e Validado (reconciliado 2026-10-02)** | Integrados CA-03/CA-09/CA-18 (estado reconciliado 2026-10-02) |
+| T-09..T-13, T-19 | Pendente | Elegíveis por dependência — ver §6, tensão objeto de reconciliação documental em 2026-10-02 |
 | T-14..T-18, T-20, T-21 | Pendente | Bloqueadas |
 
 ## 4. R-05 — pendência aberta (bloqueio externo)
@@ -91,6 +93,8 @@ O grafo de dependências marca T-09..T-13 e T-19 como elegíveis, mas o
 `REVIEW-T-08-2026-09-18` orienta explicitamente: *"não avançar a T-09"* enquanto
 R-01..R-05 estiverem abertos. As duas leituras não concordam. Decidir antes de
 retomar a execução.
+
+Em 2026-10-02, por reconciliação documental autorizada, diferenciou-se ESTADO HISTÓRICO (documentos antigos, inalterados, refletindo bloqueios das respectivas datas) de ESTADO RECONCILIADO (2026-10-02): R-01, R-02, R-03/P19 e R-05 encontram-se RESOLVIDOS posteriormente; R-04 encontra-se SUPERADO pelas validações/testes posteriores. As divergências documentais registradas em §5 não foram alteradas. Os handoffs históricos permanecem inalterados.
 
 ## 7. Investigações encerradas — não reabrir
 | Encerramento | Fonte |
