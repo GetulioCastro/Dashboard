@@ -12,9 +12,13 @@ builder.Services.AddSingleton<ISqlConnectionFactory>(
 
 builder.Services.AddScoped<IIndicadorVisaoRepository, AtendimentosVisaoRepository>();
 
+builder.Services.AddScoped<IIndicadorConvenioNominalRepository, AtendimentosConvenioNominalRepository>();
+
 builder.Services.AddScoped<ConsultasVisaoRepository>();
+builder.Services.AddScoped<IIndicadorConvenioNominalRepository, ConsultasConvenioNominalRepository>();
 
 builder.Services.AddScoped<ExamesVisaoRepository>();
+builder.Services.AddScoped<IIndicadorConvenioNominalRepository, ExamesConvenioNominalRepository>();
 
 var app = builder.Build();
 

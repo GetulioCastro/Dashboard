@@ -33,6 +33,59 @@
 | T-09..T-13, T-19 | Pendente | Elegíveis por dependência — ver §6, tensão objeto de reconciliação documental em 2026-10-02 |
 | T-14..T-18, T-20, T-21 | Pendente | Bloqueadas |
 
+### 3.1 — PLAN-002 (Análise por Convênio) — registro aditivo (2026-10-05)
+
+Novo plano, **independente** do grafo T-01..T-21 do PLAN-001. Não altera o estado da §3.
+
+| Tarefa | Status | Próxima ação |
+|---|---|---|
+| **T-01** — Inventariar pontos de extensão por indicador | **Concluído** (2026-10-05) | — |
+| **T-03** — Extender repositórios Data (SQL/consulta) para Convênio | **Concluído** (2026-10-05) | Entrega: 3 repositórios em `Dashboard.Data/Repositories` implementando `IIndicadorConvenioNominalRepository` (Atendimentos/Consultas/Exames); JOIN por chave composta, `C.DESCR` integral, filtros RN-07 e tipos 1/3; L2 e L3 resolvidas com evidência read-only; build 0 avisos/0 erros; 48 testes aprovados |
+| **T-04** — Regra de ordenação + desempate (R5) | **Concluído** (2026-10-05) | Ordenação ajustada para `ORDER BY COUNT(1) DESC, C.DESCR ASC, C.CODCONVENIO ASC, C.GRUPOEMP ASC, C.FILIAL ASC` nos 3 repositórios nominais (desempate técnico determinístico). Preserva identidade da chave composta, não altera `Identificacao = C.DESCR`. R5 resolvida. Build 0 avisos/0 erros; 48 testes aprovados. |
+| **T-05** — Integrar no backend Web (PageModel) filtros por Convênio | **Concluído** (2026-10-05) | Registrados os três repositórios nominais na DI do Web (`IIndicadorConvenioNominalRepository` → Atendimentos/Consultas/Exames). Sem alteração de UI, sem alteração de autenticação, sem impacto em repositórios/contratos existentes. Build 0 avisos/0 erros; 48 testes aprovados. |
+| T-06..T-08 | Pendente | L2/L3 resolvidas; R5 resolvida na T-04 |
+
+**T-02 — CONCLUÍDA em 2026-10-05 (contratos Core, RN-003-03/RN-003-04, valida CA-003-02).**
+Criados `Dashboard.Core/DTOs/IndicadorConvenioNominal.cs` (`ConvenioNominalVolume`,
+`IndicadorConvenioNominalVisao`) e `Dashboard.Core/Contratos/IIndicadorConvenioNominalRepository.cs`
+(`ObterConvenioNominalAsync(IndicatorFilter, CancellationToken)`). **Contrato novo, não extensão**:
+`IndicatorFilter`, `IndicadorVisao`, `DimensaoVisao`, `CoverageCategory`,
+`IIndicadorVisaoRepository` e `IIndicatorRepository` **permanecem inalterados** — nenhum campo de
+convênio nominal foi adicionado ao filtro, porque a análise nominal **não é um filtro** (DEC-003-05
+proíbe drill-down/clique; RN-003-01..10 não exigem seleção de convênio). Nomenclatura
+`ConvenioNominal` preserva a distinção entre cobertura (RN-26) e identificação nominal. Nenhuma
+regra de ordenação no contrato — R5 permanece para T-04. Sem `MODOFAT` em Core. Sem SQL, sem
+Web/UI, sem DI (T-03/T-05), sem banco, sem Git.
+
+**L1 — RESOLVIDA em 2026-10-05 (reconstrução documental do PRD-003):**
+`docs/prds/PRD-003-analise-por-convenio.md` foi **reconstruído (v0.2)** sob gate humano. Causa
+diagnosticada como **falha de materialização original**, não truncamento: o artefato foi criado
+já incompleto no commit `cfc5ecc` (2026-10-02), e a verificação de histórico Git somente leitura
+confirmou **um único blob** em todo o objeto alcançável, **nenhum segundo commit, nenhum stash,
+apenas `main`/`origin/main`** — não existia versão completa a restaurar. Materializados: §1–§5,
+**RN-003-01..RN-003-10**, **CA-003-02..CA-003-07**, matriz RN↔CA↔DEC (§5.1), premissas abertas
+(§5.2). **CA-003-01 preservada semanticamente; DEC-003-01..DEC-003-06 preservadas literalmente**
+( apenas o cabeçalho de estado obsoleto "PENDENTE/VALIDAR" → aprovadas em 2026-10-02).
+**Nada foi inventado:** §1–§5 originais, o documento de "autorização" citado na versão parcial e
+personas/stakeholders/métricas/diagramas permanecem **não recuperados** (sem fonte no repositório).
+**CA-003-08 e CA-003-09 nunca existiram** — família oficial **CA-003-01..CA-003-07**.
+
+**L4 — RESOLVIDA em 2026-10-05 (decisão humana):** a análise nominal representa os **convênios
+efetivamente presentes nos registros válidos** de cada indicador no período, **preservando RN-07,
+P19 e demais regras aprovadas**. **NÃO** se introduz `MODOFAT = 'C'` como nova regra de produto,
+e a análise **não depende** de a categoria de cobertura "Convênio" estar selecionada. Deixa de
+bloquear T-03. Materializado em `PRD-003` §3.3 e RN-003-02.
+
+**L2 — ABERTA:** P17 (`CADCONVENIO` no SisacHTML5) segue aberta em `contrato-dados-dashboard.md:223` — sem confirmação no banco alvo. Validar **somente com a credencial de leitura**, read-only, na etapa Data/SQL (T-03). Não bloqueia T-02.
+
+**L3 — ABERTA:** cardinalidade de `CADCONVENIO` sob `(CODCONVENIO, GRUPOEMP, FILIAL)` sem medição registrada; premissa do volume por convênio. Verificação técnica read-only em T-03.
+
+**R5 — ABERTA:** chave final de desempate quando `DESCR` for duplicado (ordenação pode não ser total). **Não inventada no PRD-003** (§5.2); decisão técnica atribuída a **T-04**, sem contradizer DEC-003-01/DEC-003-06.
+
+**Colisão de nomenclatura:** `DimensaoVisao.Convenio` e `CoverageCategory.Convenio` já significam **cobertura** (Particular/Convênio/SUS), não convênio individual — não reutilizar. Materializado como RN-003-03 e CA-003-02.
+
+**Reconciliação do PLAN-002 (2026-10-05):** o mapeamento `Decisões base:` foi corrigido de **posicional** (T-0*n* → DEC-003-0*n*) para **semântico** — T-04 passa a DEC-003-01 + DEC-003-06; T-06 passa a DEC-003-02..DEC-003-05 + SPEC-UI-003; T-01/T-02/T-03/T-05/T-07 sem DEC de apresentação. Nenhum checkbox de escopo funcional alterado. SPEC-UI-003, ADR, PRD-001, PRD-002, PLAN-001 e código **não alterados**.
+
 ## 4. R-05 — pendência aberta (bloqueio externo)
 
 **Sequência registrada dos fatos (2026-09-28):**
