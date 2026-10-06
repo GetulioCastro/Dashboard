@@ -114,6 +114,45 @@
             <div class="card-body">
                 <div class="grafico-visao @(visao.Forma == GraficoForma.Donut ? "grafico-visao-rosca" : "")" id="grafico-visao" role="img" aria-label="Gráfico do indicador de Atendimentos"></div>
                 <div class="mt-3" id="legenda-visao"></div>
+
+                <details class="convenio-secao mt-3" id="analise-convenios">
+                    <summary class="convenio-resumo">Análise por convênio</summary>
+                    <div class="convenio-corpo mt-2">
+                        @if (Model.ConvenioNominalIndisponivel)
+                        {
+                            <div class="alert alert-warning py-2 mb-0 small" role="alert">
+                                Não foi possível carregar a análise por convênio. O indicador consolidado acima permanece válido.
+                                <span class="d-block text-muted font-monospace mt-1">@Model.MensagemConvenioNominal</span>
+                            </div>
+                        }
+                        else if (Model.ConvenioNominal is null || Model.ConvenioNominal.Convenios.Count == 0)
+                        {
+                            <div class="grafico-vazio">Sem dados no período.</div>
+                        }
+                        else
+                        {
+                            <div class="convenio-rolagem">
+                                <table class="table table-sm table-striped align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Convênio</th>
+                                            <th scope="col" class="text-end">Volume</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var convenio in Model.ConvenioNominal.Convenios)
+                                        {
+                                            <tr>
+                                                <td>@convenio.Identificacao</td>
+                                                <td class="text-end">@convenio.Volume.ToString("N0")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                </details>
             </div>
         </div>
 

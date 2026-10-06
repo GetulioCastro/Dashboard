@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Dashboard.Core.Contratos;
 using Dashboard.Core.DTOs;
 using Dashboard.Core.Regras;
+using Dashboard.Data.Repositories;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Dashboard.Web.Pages;
@@ -17,11 +18,16 @@ public class AtendimentosModel : PageModel
     };
 
     private readonly IIndicadorVisaoRepository _visaoRepository;
+    private readonly AtendimentosConvenioNominalRepository _convenioNominalRepository;
     private readonly ILogger<AtendimentosModel> _logger;
 
-    public AtendimentosModel(IIndicadorVisaoRepository visaoRepository, ILogger<AtendimentosModel> logger)
+    public AtendimentosModel(
+        IIndicadorVisaoRepository visaoRepository,
+        AtendimentosConvenioNominalRepository convenioNominalRepository,
+        ILogger<AtendimentosModel> logger)
     {
         _visaoRepository = visaoRepository;
+        _convenioNominalRepository = convenioNominalRepository;
         _logger = logger;
     }
 
@@ -34,6 +40,12 @@ public class AtendimentosModel : PageModel
     public bool DadosIndisponiveis { get; private set; }
 
     public string MensagemIndisponibilidade { get; private set; } = string.Empty;
+
+    public IndicadorConvenioNominalVisao? ConvenioNominal { get; private set; }
+
+    public bool ConvenioNominalIndisponivel { get; private set; }
+
+    public string MensagemConvenioNominal { get; private set; } = string.Empty;
 
     public async Task OnGetAsync(
         string? dimensao = null,
@@ -69,6 +81,28 @@ public class AtendimentosModel : PageModel
             DadosJson = "null";
             DadosIndisponiveis = true;
             MensagemIndisponibilidade = $"{erro.GetType().Name}: {erro.Message}";
+        }
+
+        if (Visao is null)
+        {
+            return;
+        }
+
+        try
+        {
+            ConvenioNominal = await _convenioNominalRepository.ObterConvenioNominalAsync(filtro, cancellationToken);
+        }
+        catch (Exception erro) when (erro is not OperationCanceledException)
+        {
+            _logger.LogError(
+                erro,
+                "Falha ao consultar a analise nominal por convenio de Atendimentos. Inicio={Inicio} Fim={Fim}",
+                filtro.StartDate,
+                filtro.EndDate);
+
+            ConvenioNominal = null;
+            ConvenioNominalIndisponivel = true;
+            MensagemConvenioNominal = $"{erro.GetType().Name}: {erro.Message}";
         }
     }
 

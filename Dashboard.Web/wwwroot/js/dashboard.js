@@ -203,21 +203,6 @@
         });
     }
 
-    function atualizarSelecao() {
-        var n = 0;
-        document.querySelectorAll('.chk-selecionar').forEach(function (chk) {
-            var id = chk.id.replace('sel-', '');
-            var card = elemento('card-' + id);
-            if (chk.checked) {
-                card.classList.add('selecionado');
-                n++;
-            } else {
-                card.classList.remove('selecionado');
-            }
-        });
-        elemento('qtd-selecionados').textContent = String(n);
-    }
-
     function aplicarFiltro() {
         var a = elemento('filtro-inicio').value;
         var b = elemento('filtro-fim').value;
@@ -271,10 +256,6 @@
         });
     });
 
-    document.querySelectorAll('.chk-selecionar').forEach(function (chk) {
-        chk.addEventListener('change', atualizarSelecao);
-    });
-
     document.querySelectorAll('[data-menu-indicador]').forEach(function (link) {
         link.addEventListener('click', function (e) {
             e.preventDefault();
@@ -289,12 +270,6 @@
             void card.offsetWidth;
             card.classList.add('destaque');
 
-            var chk = elemento('sel-' + id);
-            if (chk && !chk.checked) {
-                chk.checked = true;
-                atualizarSelecao();
-            }
-
             document.querySelectorAll('[data-menu-indicador]').forEach(function (x) {
                 x.classList.remove('active');
             });
@@ -303,6 +278,34 @@
     });
 
     var modalEl = elemento('modal-maximizado');
+
+    function navegacaoDoCard(card) {
+        return card.getAttribute('data-href');
+    }
+
+    function ehControleInterno(alvo) {
+        return typeof alvo.closest === 'function' &&
+            alvo.closest('button, a, input, select, textarea, label, [data-no-nav]') !== null;
+    }
+
+    document.querySelectorAll('.ind-card[data-href]').forEach(function (card) {
+        card.addEventListener('click', function (e) {
+            if ((e.button != null && e.button !== 0) || e.defaultPrevented || ehControleInterno(e.target)) {
+                return;
+            }
+
+            window.location.href = navegacaoDoCard(card);
+        });
+
+        card.addEventListener('keydown', function (e) {
+            if (e.target !== card || (e.key !== 'Enter' && e.key !== ' ')) {
+                return;
+            }
+
+            e.preventDefault();
+            window.location.href = navegacaoDoCard(card);
+        });
+    });
 
     document.querySelectorAll('.btn-maximizar').forEach(function (btn) {
         btn.addEventListener('click', function () {

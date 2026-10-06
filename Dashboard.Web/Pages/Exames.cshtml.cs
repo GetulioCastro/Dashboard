@@ -17,11 +17,16 @@ public class ExamesModel : PageModel
     };
 
     private readonly ExamesVisaoRepository _visaoRepository;
+    private readonly ExamesConvenioNominalRepository _convenioNominalRepository;
     private readonly ILogger<ExamesModel> _logger;
 
-    public ExamesModel(ExamesVisaoRepository visaoRepository, ILogger<ExamesModel> logger)
+    public ExamesModel(
+        ExamesVisaoRepository visaoRepository,
+        ExamesConvenioNominalRepository convenioNominalRepository,
+        ILogger<ExamesModel> logger)
     {
         _visaoRepository = visaoRepository;
+        _convenioNominalRepository = convenioNominalRepository;
         _logger = logger;
     }
 
@@ -34,6 +39,12 @@ public class ExamesModel : PageModel
     public bool DadosIndisponiveis { get; private set; }
 
     public string MensagemIndisponibilidade { get; private set; } = string.Empty;
+
+    public IndicadorConvenioNominalVisao? ConvenioNominal { get; private set; }
+
+    public bool ConvenioNominalIndisponivel { get; private set; }
+
+    public string MensagemConvenioNominal { get; private set; } = string.Empty;
 
     public async Task OnGetAsync(
         string? dimensao = null,
@@ -69,6 +80,28 @@ public class ExamesModel : PageModel
             DadosJson = "null";
             DadosIndisponiveis = true;
             MensagemIndisponibilidade = $"{erro.GetType().Name}: {erro.Message}";
+        }
+
+        if (Visao is null)
+        {
+            return;
+        }
+
+        try
+        {
+            ConvenioNominal = await _convenioNominalRepository.ObterConvenioNominalAsync(filtro, cancellationToken);
+        }
+        catch (Exception erro) when (erro is not OperationCanceledException)
+        {
+            _logger.LogError(
+                erro,
+                "Falha ao consultar a analise nominal por convenio de Exames. Inicio={Inicio} Fim={Fim}",
+                filtro.StartDate,
+                filtro.EndDate);
+
+            ConvenioNominal = null;
+            ConvenioNominalIndisponivel = true;
+            MensagemConvenioNominal = $"{erro.GetType().Name}: {erro.Message}";
         }
     }
 

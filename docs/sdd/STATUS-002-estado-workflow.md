@@ -1,7 +1,7 @@
 # STATUS-002 — Estado do Workflow (transição Leanwork SDD + Atendimentos Reais)
 
 > **Tipo:** estado do workflow — recuperação persistente entre sessões
-> **Data:** 2026-09-28
+> **Data:** 2026-10-06 (origem: 2026-09-28)
 > **Substitui:** `STATUS-001-checkpoint-kickoff.md` (2026-09-16) — **preservado,
 > não apagado**; descreve o kick off, hoje superado
 > **Regra:** ao encerrar uma sessão, ATUALIZE este arquivo. Não crie handoff novo
@@ -21,6 +21,7 @@
 | Requisitos | PRD-001 (Epic) / PRD-002 (Atendimentos) | Rascunho — revisão 2 |
 | Especificação | SPEC-UI-001, SPEC-VIS-001 | Aguardando validação humana |
 | Plano | PLAN-001 (T-01..T-21) | Execução em andamento |
+| Plano | PLAN-002 (T-01..T-08) — Análise por Convênio | **ENCERRADO (2026-10-06)** — T-01..T-08 concluídas, build 0/0, 72/72 testes, P19 reconciliado, UI integrada, **gate humano visual aprovado (2026-10-06)**; sem pendência funcional aberta; evolução gráfica não iniciada |
 | Revisão | REVIEW-T-08-2026-09-18 | Aprovado com ressalvas |
 
 > **Nota de reconciliação (2026-10-02):** Reconciliação documental do estado do workflow realizada sem alterar documentos históricos.
@@ -43,7 +44,9 @@ Novo plano, **independente** do grafo T-01..T-21 do PLAN-001. Não altera o esta
 | **T-03** — Extender repositórios Data (SQL/consulta) para Convênio | **Concluído** (2026-10-05) | Entrega: 3 repositórios em `Dashboard.Data/Repositories` implementando `IIndicadorConvenioNominalRepository` (Atendimentos/Consultas/Exames); JOIN por chave composta, `C.DESCR` integral, filtros RN-07 e tipos 1/3; L2 e L3 resolvidas com evidência read-only; build 0 avisos/0 erros; 48 testes aprovados |
 | **T-04** — Regra de ordenação + desempate (R5) | **Concluído** (2026-10-05) | Ordenação ajustada para `ORDER BY COUNT(1) DESC, C.DESCR ASC, C.CODCONVENIO ASC, C.GRUPOEMP ASC, C.FILIAL ASC` nos 3 repositórios nominais (desempate técnico determinístico). Preserva identidade da chave composta, não altera `Identificacao = C.DESCR`. R5 resolvida. Build 0 avisos/0 erros; 48 testes aprovados. |
 | **T-05** — Integrar no backend Web (PageModel) filtros por Convênio | **Concluído** (2026-10-05) | Registrados os três repositórios nominais na DI do Web (`IIndicadorConvenioNominalRepository` → Atendimentos/Consultas/Exames). Sem alteração de UI, sem alteração de autenticação, sem impacto em repositórios/contratos existentes. Build 0 avisos/0 erros; 48 testes aprovados. |
-| T-06..T-08 | Pendente | L2/L3 resolvidas; R5 resolvida na T-04 |
+| **T-06** — UI da seção nos 3 indicadores | **Concluído** (2026-10-06) | Seção `<details>` expansível com tabela, estados vazio/erro e navegação dos cards preservada; entrega registrada em `PLAN-002` (§ Entrega da T-06) |
+| **T-07** — Testes CA-003-01..07 | **Concluído** (2026-10-06) | `ConvenioNominalRepositoryTests.cs`: 24 testes novos (16 SQL estático + 8 integração); CA-003-01/03/04/07 automatizados, CA-003-02/05/06 por regressão + revisão analítica de UI; suíte **72/72**; divergência de narrativa P19 (T-03 vs SQL) **reconciliada no gate humano final (2026-10-06)** — narrativa corrigida, P19 aplicado |
+| **T-08** — Revisão final e escopo | **Concluído** (2026-10-06) | Checklist 4/4 e critérios globais 5/5; sem indicador novo, escopo exclusivo dos 3 indicadores, nenhuma rota nova; **ciclo PLAN-002 encerrado** (T-01..T-08 concluídos); evolução gráfica não iniciada |
 
 **T-02 — CONCLUÍDA em 2026-10-05 (contratos Core, RN-003-03/RN-003-04, valida CA-003-02).**
 Criados `Dashboard.Core/DTOs/IndicadorConvenioNominal.cs` (`ConvenioNominalVolume`,
@@ -76,11 +79,18 @@ P19 e demais regras aprovadas**. **NÃO** se introduz `MODOFAT = 'C'` como nova 
 e a análise **não depende** de a categoria de cobertura "Convênio" estar selecionada. Deixa de
 bloquear T-03. Materializado em `PRD-003` §3.3 e RN-003-02.
 
-**L2 — ABERTA:** P17 (`CADCONVENIO` no SisacHTML5) segue aberta em `contrato-dados-dashboard.md:223` — sem confirmação no banco alvo. Validar **somente com a credencial de leitura**, read-only, na etapa Data/SQL (T-03). Não bloqueia T-02.
+**L2 — RESOLVIDA na T-03 (2026-10-05):** estrutura necessária confirmada read-only
+(`INFORMATION_SCHEMA.COLUMNS`: `CADCONVENIO` com `CODCONVENIO,GRUPOEMP,FILIAL,DESCR,MODOFAT,SUSPENSO`
+e `ENTRADA` com as colunas do filtro). P17 permanece como premissa de homologação em
+`contrato-dados-dashboard.md` para o banco-alvo SisacHTML5 — registro em `PLAN-002` (§ Entrega da T-03).
 
-**L3 — ABERTA:** cardinalidade de `CADCONVENIO` sob `(CODCONVENIO, GRUPOEMP, FILIAL)` sem medição registrada; premissa do volume por convênio. Verificação técnica read-only em T-03.
+**L3 — RESOLVIDA na T-03 (2026-10-05):** `CADCONVENIO` 603 linhas / 603 chaves distintas
+`(CODCONVENIO,GRUPOEMP,FILIAL)`; `INNER JOIN` com `ENTRADA` perde < 0,0012% — chave
+funcional verificada com evidência read-only.
 
-**R5 — ABERTA:** chave final de desempate quando `DESCR` for duplicado (ordenação pode não ser total). **Não inventada no PRD-003** (§5.2); decisão técnica atribuída a **T-04**, sem contradizer DEC-003-01/DEC-003-06.
+**R5 — RESOLVIDA na T-04 (2026-10-05):** desempate determinístico final
+`ORDER BY COUNT(1) DESC, C.DESCR ASC, C.CODCONVENIO ASC, C.GRUPOEMP ASC, C.FILIAL ASC`
+nos 3 repositórios nominais, sem contradizer DEC-003-01/DEC-003-06.
 
 **Colisão de nomenclatura:** `DimensaoVisao.Convenio` e `CoverageCategory.Convenio` já significam **cobertura** (Particular/Convênio/SUS), não convênio individual — não reutilizar. Materializado como RN-003-03 e CA-003-02.
 

@@ -4,6 +4,13 @@
     ViewData["Title"] = "Dashboard de Indicadores";
 
     var referencia = Model.Indicadores.FirstOrDefault()?.Referencia ?? string.Empty;
+
+    var rotasDetalhadas = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["atendimentos"] = "/Atendimentos",
+        ["consultas"] = "/Consultas",
+        ["exames"] = "/Exames"
+    };
 }
 
 @section MenuLateral {
@@ -48,25 +55,22 @@
         </div>
     </div>
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <span class="text-muted small">
-            <span id="qtd-selecionados">0</span> indicador(es) selecionado(s)
-        </span>
+    <div class="d-flex justify-content-end align-items-center mb-3">
         <span class="badge text-bg-light border" id="status-periodo"></span>
     </div>
 
     <div class="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-4">
         @foreach (var indicador in Model.Indicadores)
         {
+            var rotaDetalhada = rotasDetalhadas.TryGetValue(indicador.Id, out var pagina) ? Url.Page(pagina) : null;
             <div class="col">
-                <section class="card h-100 shadow-sm ind-card" id="card-@indicador.Id" data-indicador="@indicador.Id" aria-label="@indicador.Nome">
+                <section class="card h-100 shadow-sm ind-card" id="card-@indicador.Id" data-indicador="@indicador.Id" aria-label="@indicador.Nome"
+                         data-href="@rotaDetalhada"
+                         role="@(rotaDetalhada is null ? null : "link")"
+                         tabindex="@(rotaDetalhada is null ? null : "0")">
                     <div class="card-header bg-white d-flex align-items-center justify-content-between gap-2">
                         <h2 class="h6 card-title mb-0">@indicador.Nome</h2>
                         <div class="d-flex align-items-center gap-2">
-                            <div class="form-check form-switch m-0">
-                                <input class="form-check-input chk-selecionar" type="checkbox" role="switch"
-                                       id="sel-@indicador.Id" aria-label="Selecionar @indicador.Nome" />
-                            </div>
                             <button type="button" class="btn btn-sm btn-outline-primary btn-maximizar"
                                     data-indicador="@indicador.Id" aria-label="Maximizar @indicador.Nome"
                                     title="Abrir visão detalhada deste gráfico">Maximizar</button>

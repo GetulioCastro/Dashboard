@@ -60,7 +60,11 @@ body {
   padding: 0.75rem 0.75rem 0.25rem;
 }
 
-.ind-card.selecionado {
+.ind-card[data-href] {
+  cursor: pointer;
+}
+
+.ind-card[data-href]:focus-visible {
   outline: 3px solid var(--bs-primary);
   outline-offset: 2px;
 }
@@ -119,6 +123,22 @@ body {
   width: 100%;
   height: auto;
   display: block;
+}
+
+.convenio-secao {
+  border-top: 1px solid var(--bs-border-color);
+  padding-top: 0.75rem;
+}
+
+.convenio-resumo {
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.convenio-rolagem {
+  max-height: 20rem;
+  overflow-y: auto;
 }
 
 @keyframes ind-flash {

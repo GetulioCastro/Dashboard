@@ -9,6 +9,20 @@ namespace Dashboard.Data.Repositories;
 
 public sealed class AtendimentosConvenioNominalRepository(ISqlConnectionFactory connectionFactory) : IIndicadorConvenioNominalRepository
 {
+    internal const string Sql = @"
+        SELECT 
+            C.DESCR AS Identificacao,
+            COUNT(1) AS Volume
+        FROM dbo.ENTRADA E
+        INNER JOIN dbo.CADCONVENIO C ON C.CODCONVENIO = E.CODCONVENIO AND C.GRUPOEMP = E.GRUPOEMP AND C.FILIAL = E.FILIAL
+        WHERE E.DATAHORAENT >= @DataInicio
+          AND E.DATAHORAENT < @DataFim
+          AND E.FECHADO <> 'C'
+          AND COALESCE(E.LoteEnt,'') <> 'INAT'
+          AND COALESCE(C.SUSPENSO, '') <> 'SUSPENSO'
+        GROUP BY C.CODCONVENIO, C.GRUPOEMP, C.FILIAL, C.DESCR
+        ORDER BY COUNT(1) DESC, C.DESCR ASC, C.CODCONVENIO ASC, C.GRUPOEMP ASC, C.FILIAL ASC";
+
     private readonly ISqlConnectionFactory _connectionFactory = connectionFactory;
 
     public async Task<IndicadorConvenioNominalVisao> ObterConvenioNominalAsync(
@@ -25,21 +39,9 @@ public sealed class AtendimentosConvenioNominalRepository(ISqlConnectionFactory 
         parametros.Add("DataInicio", inicio);
         parametros.Add("DataFim", fim);
 
-        const string sql = @"SELECT 
-                C.DESCR AS Identificacao,
-                COUNT(1) AS Volume
-            FROM dbo.ENTRADA E
-            INNER JOIN dbo.CADCONVENIO C ON C.CODCONVENIO = E.CODCONVENIO AND C.GRUPOEMP = E.GRUPOEMP AND C.FILIAL = E.FILIAL
-            WHERE E.DATAHORAENT >= @DataInicio
-              AND E.DATAHORAENT < @DataFim
-              AND E.FECHADO <> 'C'
-              AND COALESCE(E.LoteEnt,'') <> 'INAT'
-              AND COALESCE(C.SUSPENSO, '') <> 'SUSPENSO'
-            GROUP BY C.CODCONVENIO, C.GRUPOEMP, C.FILIAL, C.DESCR
-            ORDER BY COUNT(1) DESC, C.DESCR ASC, C.CODCONVENIO ASC, C.GRUPOEMP ASC, C.FILIAL ASC";
 
         using IDbConnection connection = _connectionFactory.Create();
-        var command = new CommandDefinition(sql, parametros, cancellationToken: cancellationToken);
+        var command = new CommandDefinition(Sql, parametros, cancellationToken: cancellationToken);
         var linhas = (await connection.QueryAsync<ConvenioNominalVolume>(command)).ToList();
 
         decimal total = linhas.Sum(l => l.Volume);

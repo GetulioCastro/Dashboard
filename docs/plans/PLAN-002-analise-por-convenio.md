@@ -209,9 +209,20 @@ Três repositórios novos em `Dashboard.Data/Repositories`:
 - `ConsultasConvenioNominalRepository` — adiciona `E.TIPO = @Tipo` (`'1'`), mesmo critério de exclusão.
 - `ExamesConvenioNominalRepository` — `E.TIPO = @Tipo` (`'3'`).
 
-**Evidência L2 — estrutura necessária (somente leitura):** consulta a `INFORMATION_SCHEMA.COLUMNS` validou as colunas necessárias para `CADCONVENIO` (`CODCONVENIO,GRUPOEMP,FILIAL,DESCR,MODOFAT,SUSPENSO`) e `ENTRADA` (`CODCONVENIO,GRUPOEMP,FILIAL,TIPO,FECHADO,LoteEnt,DATAHORAENT`). Preservado `SUSPENSO` para referência (P19), mas **não utilizado** nesta análise nominal por decisão L4 (convênios presentes no conjunto válido, sem `MODOFAT='C'`). RN-07 preservada.
+**Evidência L2 — estrutura necessária (somente leitura):** consulta a `INFORMATION_SCHEMA.COLUMNS` validou as colunas necessárias para `CADCONVENIO` (`CODCONVENIO,GRUPOEMP,FILIAL,DESCR,MODOFAT,SUSPENSO`) e `ENTRADA` (`CODCONVENIO,GRUPOEMP,FILIAL,TIPO,FECHADO,LoteEnt,DATAHORAENT`). Coluna `SUSPENSO` confirmada e **aplicada à análise nominal por P19** (predicado `COALESCE(C.SUSPENSO, '') <> 'SUSPENSO'`), conforme solução final, CA-003-03 e decisões consolidadas do ciclo — ver **nota de reconciliação documental (2026-10-06)** logo abaixo. RN-07 preservada.
 
-**Evidência L3 — cardinalidade/chave composta:** `CADCONVENIO` com 603 linhas; registros com chave completa: 603; chaves distintas `(CODCONVENIO,GRUPOEMP,FILIAL)` = 603 (sem duplicações) — chave única/funcional por essa tríade no conjunto lido. `ENTRADA` com 2.095.283 linhas; `INNER JOIN` produz 2.095.261 linhas (perda < 0,0012%); quantidade com convênios suspensos nos registros de ENTRADA é 341.568 — mas **não excluídos** por P19 nesta análise (conforme decisão L4). L3 **verificada e coerente** com a premissa de `JOIN` composto.
+**Evidência L3 — cardinalidade/chave composta:** `CADCONVENIO` com 603 linhas; registros com chave completa: 603; chaves distintas `(CODCONVENIO,GRUPOEMP,FILIAL)` = 603 (sem duplicações) — chave única/funcional por essa tríade no conjunto lido. `ENTRADA` com 2.095.283 linhas; `INNER JOIN` produz 2.095.261 linhas (perda < 0,0012%); quantidade com convênios suspensos nos registros de ENTRADA é 341.568 — **excluídos por P19 na análise nominal** (`COALESCE(C.SUSPENSO, '') <> 'SUSPENSO'`), conforme solução final. L3 **verificada e coerente** com a premissa de `JOIN` composto.
+
+> **Nota de reconciliação documental (2026-10-06 — gate humano de encerramento do PLAN-002).**
+> Versões anteriores desta entrega da T-03 afirmavam que `SUSPENSO`/P19 era "não utilizado/não
+> excluídos nesta análise nominal". A frase descrevia um estado intermediário e está **retirada**:
+> a **implementação final** e as decisões consolidadas do ciclo estabelecem que **P19 está
+> aplicado** à análise nominal por convênio — `COALESCE(C.SUSPENSO, '') <> 'SUSPENSO'` exclui
+> `SUSPENSO = 'SUSPENSO'`; `DATASUSP` permanece apenas corroborativo e fora do predicado;
+> `SUSPENSO = 'S'` não representa suspensão; **não existe** nova regra `MODOFAT='C'`.
+> Exigido pela solução final, por CA-003-03 (§7.3) e pelas decisões já consolidadas
+> (`contrato-dados-dashboard.md:226`; reconciliação `2026-10-02-reconciliacao-workflow-...md`).
+> A T-03 **não é reaberta**: apenas a narrativa foi corrigida; nenhum código, SQL ou teste alterado.
 
 **Preservação:** contratos existentes não alterados; repositórios existentes não alterados; `AtendimentosRepository.ConstruirClausulaFrom/ConstruirCondicoesCobertura` não utilizados (não aplicáveis à análise nominal L4). Nenhuma regra de desempate extra além do ORDER BY indicado; R5 permanece em T-04. SQL estritamente somente leitura, parâmetros Dapper. Build `dotnet build Dashboard.slnx`: 0 avisos/0 erros. Testes: 9 Core.Tests + 39 Data.Tests — **0 falhas**. Não houve acesso a banco para testes (suíte de integração com credencial permanece como lacuna conhecida), mas as novas classes compilam e não quebram existentes.
 
@@ -245,43 +256,159 @@ L2 **RESOLVIDA** (estrutura necessária confirmada). L3 **RESOLVIDA** (chave com
 - [x] Validar 3 indicadores — DI configurada para os três sem impacto nas implementações existentes
 
 ### T-06 — Atualizar UI (Razor/JS) para seleção/propagação do Convênio
-- **Status:** Pendente
+- **Status:** Concluído (2026-10-06)
 - **Prioridade:** Alta
 - **Depende de:** T-05
 - **Implementa:** RN-003-09, RN-003-10
 - **Valida:** CA-003-06, CA-003-07
 - **Decisões base:** DEC-003-02, DEC-003-03, DEC-003-04, DEC-003-05, SPEC-UI-003 (DEC-003-06 pertence a T-04 — ordenação em Core)
 
-- [ ] Expor a análise em **seção expansível** vinculada ao indicador, conforme DEC-003-05 e SPEC-UI-003 — **sem drill-down/clique e sem nova rota**; a SPEC-UI-003 não define "controle de Convênio"
-- [ ] Apresentar em tabela com identificação nominal + volume (DEC-003-03), exibindo **todos** os convênios presentes (DEC-003-02), com rolagem vertical (DEC-003-04)
-- [ ] Manter responsividade/estilo existente
-- [ ] Garantir compatibilidade com filtros existentes
-- [ ] Verificar estados vazios/erros conforme necessário
+- [x] Expor a análise em **seção expansível** vinculada ao indicador, conforme DEC-003-05 e SPEC-UI-003 — **sem drill-down/clique e sem nova rota**; a SPEC-UI-003 não define "controle de Convênio"
+- [x] Apresentar em tabela com identificação nominal + volume (DEC-003-03), exibindo **todos** os convênios presentes (DEC-003-02), com rolagem vertical (DEC-003-04)
+- [x] Manter responsividade/estilo existente
+- [x] Garantir compatibilidade com filtros existentes
+- [x] Verificar estados vazios/erros conforme necessário
+
+#### Entrega da T-06 (UI — seção nominal por convênio nos 3 indicadores)
+
+**Escopo interpretado (gate humano 2026-10-06):** "seleção/propagação do Convênio" **não**
+cria seletor/checkbox/dropdown/drilldown/rota/página/Top N/"Outros"/paginação — a UI entrega
+apenas a seção expansível contextual com tabela nominal (RN-003-09/RN-003-10,
+DEC-003-02..DEC-003-05).
+
+**Arquivos alterados (7):**
+
+| Arquivo | Alteração |
+|---|---|
+| `Dashboard.Web/Program.cs` | registro **concreto** dos 3 repositórios nominais (`AddScoped<Atendimentos/Consultas/ExamesConvenioNominalRepository>()`), seguindo o padrão já usado para `ConsultasVisaoRepository`/`ExamesVisaoRepository` (`Program.cs:17,20`) — necessário porque as 3 registrations de `IIndicadorConvenioNominalRepository` existentes têm *last-wins* (resolvem sempre `Exames...`) e cada página precisa da **sua** implementação. As registrations de T-05 foram **mantidas**; nada injeta a interface. |
+| `Pages/Atendimentos.cshtml.cs`, `Pages/Consultas.cshtml.cs`, `Pages/Exames.cshtml.cs` | injeção do repositório nominal concreto; propriedades `ConvenioNominal` / `ConvenioNominalIndisponivel` / `MensagemConvenioNominal`; consulta ao contrato de T-02/T-03 **após** sucesso da visão, em `try/catch` **próprio** (falha nominal **não** derruba o indicador consolidado). Mesmo `IndicatorFilter` de `MontarFiltro` → período/filtros preservados (CA-003-05). |
+| `Pages/Atendimentos.cshtml`, `Pages/Consultas.cshtml`, `Pages/Exames.cshtml` | bloco `<details class="convenio-secao">` + `<summary>Análise por convênio</summary>` inserido **dentro do card do indicador**, após `#legenda-visao` (ponto de inserção da T-01 §C). Tabela `Convênio \| Volume` com **todos** os itens, na ordem do repositório (T-04: volume DESC, DESCR ASC, chave composta ASC). |
+| `wwwroot/css/site.css` | `.convenio-secao` (top divider), `.convenio-resumo` (cursor/peso), `.convenio-rolagem` (`max-height: 20rem; overflow-y: auto` = DEC-003-04). |
+
+**Estados:**
+
+- **Normal:** `<details>` expandido manualmente; tabela com todos os convênios, volume formatado `N0`, ordenação vinda do Data (já aplicada em T-03/T-04).
+- **Vazio** (`Convenios.Count == 0` ou visão nula): reutiliza o estado vazio existente — `<div class="grafico-vazio">Sem dados no período.</div>` (mesma mensagem/tratamento de `atendimentos.js:30`), conforme CA-003-07.
+- **Erro:** `alert alert-warning` **contido na seção**, com mensagem clara + detalhe `font-monospace`, declarando que o indicador consolidado permanece válido; nenhum valor inventado (CA-003-07). Se a **visão** falhar, a seção nem é renderizada (fluxo `DadosIndisponiveis` já existente, intocado).
+
+**Não criado (confirmado):** seletor de convênio, checkbox/toggle, dropdown, drill-down/clique
+sobre linhas (`<tr>` sem handlers/links), nova rota/página, Top N, agrupamento "Outros",
+paginação, novos endpoints. **JS:** nenhuma alteração — a expansão usa `<details>` nativo
+(operação por teclado/leitor de tela preservada).
+
+**Preservado:** clique de navegação dos cards e Maximizar (`Index.cshtml`/`dashboard.js`
+intocados), menu lateral, filtros (`form method="get"` e campos ocultos intocados), gráficos
+(`atendimentos.js` intocado), rotas existentes, autenticação (ADR-009), contratos Core, RN-07,
+P19, ausência de `MODOFAT='C'` (nenhuma regra nova), Data/Core **sem alteração**.
+
+**Wiring Web justificado (evidência objetiva):** T-05 registrou a infraestrutura no DI mas
+**nenhum PageModel consumia** o contrato de T-02/T-03 — sem a consulta em PageModel + registro
+concreto, a seção não teria dados. Nenhum arquivo de `Dashboard.Core`, `Dashboard.Data` ou SQL
+foi alterado.
+
+**Validação:** `dotnet build Dashboard.slnx` → **0 avisos / 0 erros**;
+`dotnet test Dashboard.slnx --no-build` → **48/48 aprovados** (9 Core + 39 Data, 0 falhas).
+Sem servidor, sem banco, sem Git, sem `/leanwork-next`. **T-07 não iniciada** (estado na
+entrega da T-06; T-07 concluída no mesmo ciclo em 2026-10-06 — ver § T-07).
 
 ### T-07 — Testes de integração/cenários CA-003
-- **Status:** Pendente
+- **Status:** Concluído (2026-10-06)
 - **Prioridade:** Alta
 - **Depende de:** T-06
 - **Implementa:** Todos RN afetados
 - **Valida:** CA-003-01..CA-003-07 (integrados) — família oficial; CA-003-08/09 não existem
 - **Decisões base:** — (conformidade global; cada CA referencia suas DEC no PRD-003 §7)
 
-- [ ] Validar cada cenário Gherkin aprovado
-- [ ] Rodar testes existentes para evitar regressão
-- [ ] Cobrir os 3 indicadores com filtro Convênio
+- [x] Validar cada cenário Gherkin aprovado
+- [x] Rodar testes existentes para evitar regressão
+- [x] Cobrir os 3 indicadores com filtro Convênio
+
+#### Entrega da T-07 (testes CA-003 — automatizado + analítico)
+
+**Artefato único criado:** `Dashboard.Data.Tests/Repositories/ConvenioNominalRepositoryTests.cs`
+— **24 testes novos** (16 SQL estático + 8 de integração), todos nomeados na convenção
+`CA_XX_descricao`. **Alteração mínima em Data (justificada):** o SQL dos 3 repositórios
+nominais foi extraído para `internal const string Sql` — mesma visibilidade `internal`
+já concedida ao assembly de testes via `InternalsVisibleTo` (`Dashboard.Data.csproj:8`);
+o método passou a usar `new CommandDefinition(Sql, ...)` **sem mudança de comportamento**.
+
+**Validação:** `dotnet build Dashboard.slnx` → **0 avisos / 0 erros**;
+`dotnet test Dashboard.slnx --no-build` → **72/72 aprovados** (9 Core + 63 Data, 0 falhas),
+incluindo a suíte pré-existente de visão/cobertura (regressão de CA-003-02 e RN-003-08).
+
+**Cobertura por cenário Gherkin:**
+
+| CA | Como foi validada |
+|---|---|
+| CA-003-01 | Integração `CA_003_01_listagem_de_atendimentos_com_identificacao_e_volume`: convênios não vazios com `Identificacao`, `Volume > 0`, soma = `ValorTotal`, período devolvido igual ao filtro |
+| CA-003-02 | Regressão da suíte completa verde (visões de cobertura intactas) + `sql_nominal_preserva_p19_sem_introduzir_regra_de_modofat` (P19 presente, `MODOFAT` ausente) + `Dashboard.Core` **sem diff** (contratos, séries e totais de cobertura intocados; identificação nominal em contrato próprio, distinta de `DimensaoVisao.Convenio`) |
+| CA-003-03 | Integração `CA_003_03_listagem_de_consultas_e_exames_com_identificacao_e_volume` (não vazio, volumes positivos) + `sql_nominal_filtra_tipo_somente_em_consultas_e_exames` (TIPO 1/3) + P19 aplicado (suspensos não listados) |
+| CA-003-04 | Integração `CA_003_04_ordenacao_por_volume_decrescente_na_listagem` (volume decrescente **+ estabilidade entre duas recargas do mesmo período**) + `sql_nominal_ordena_volume_decrescente_com_desempate_az_e_chave_composta` (desempate A–Z e chave completa) |
+| CA-003-05 | Integração: período do filtro devolvido íntegro (CA-003-01) nos repositórios dos 3 indicadores; analítico: `OnGetAsync` usa **um único `filtro`** para a visão consolidada e a nominal (`Atendimentos.cshtml.cs:57,62,93` — mesmo padrão nos 3 PageModels), a seção é inline (sem navegação → filtros preservados) e não há código de autenticação/identidade/autorização na análise (ADR-009) |
+| CA-003-06 | Analítico: tabela renderizada nos 3 `.cshtml` (ex.: `Atendimentos.cshtml:135-151`) com `foreach` de **todos** os convênios, sem Top N, sem agrupamento e sem paginação; rolagem vertical por `.convenio-rolagem { max-height; overflow-y: auto }` (`site.css:139-142`); SQL sem `TOP`/`OFFSET`/`FETCH` (teste estático) — quantidade de itens independe da janela |
+| CA-003-07 | Integração `CA_003_07_estado_vazio_periodo_sem_dados_retorna_lista_vazia` (estado vazio → lista vazia e total 0, nenhum valor inventado) + `estado_de_erro_propaga_falha_para_a_camada_superior` (falha propaga; sem credencial a mensagem de ausência é explícita); analítico: `<details>` nativo (`Atendimentos.cshtml:118`), `<tr>` sem handlers/links (145), erro em `alert alert-warning` contido na seção com detalhe monoespaçado (123-126), estado vazio reutiliza `.grafico-vazio` (130), seção só renderiza quando a visão consolidada existe (`Atendimentos.cshtml.cs:86-89`); nenhuma página/rota nova |
+
+**Janela das integrações:** Consultas/Exames validam também com período integral
+(1900..2100). Atendimentos usa **2024-01-01..2024-12-31** — janela representativa com
+dados (`PLAN-001:421`: ENTRADA "2005→2024 com dados, quase nada em 2025/2026"); o
+intervalo integral excedeu o timeout de 30 s do `CommandDefinition`. `SqlException`
+**erro −2 (timeout) é distinguido** de falha de permissão na mensagem do teste.
+
+**Divergência reconciliada (gate humano, 2026-10-06):** a narrativa intermediária da T-03
+dizia que SUSPENSO/P19 era "não utilizado/não excluídos nesta análise nominal", enquanto o
+SQL implementado **aplica** `COALESCE(C.SUSPENSO,'') <> 'SUSPENSO'` — exigido por CA-003-03
+(§7.3: "convênios suspensos não são listados (conforme P19)") e coerente com a formulação
+da própria L4 ("preservando RN-07, P19", `PLAN-002:130`). A narrativa da T-03 foi
+**corrigida documentalmente** conforme decisão do gate final; estado verdadeiro:
+**P19 aplicado e coberto por teste** (`SUSPENSO = 'SUSPENSO'` excluído; `DATASUSP` apenas
+corroborativo; `SUSPENSO = 'S'` não é suspensão; sem nova regra `MODOFAT='C'`).
+Nenhum código, SQL ou teste alterado.
+
+Sem servidor, sem novo acesso exploratório a banco (integrações read-only já previstas
+pela credencial `ConnectionStrings__SisacDatabase`), sem Git, sem `/leanwork-next`.
 
 ### T-08 — Revisão final e verificação de escopo
-- **Status:** Pendente
+- **Status:** Concluído (2026-10-06)
 - **Prioridade:** Média
 - **Depende de:** T-06, T-07
 - **Implementa:** RN-003 globais
 - **Valida:** Conformidade com PRD-003/SPEC-UI-003
 - **Decisões base:** DEC-003-01..DEC-003-06
 
-- [ ] Confirmar que não foi adicionado indicador novo
-- [ ] Confirmar escopo exclusivo Atendimentos/Consultas/Exames
-- [ ] Revisão cruzada dos pontos de validação humana (se houver)
-- [ ] Checklist de fechamento
+- [x] Confirmar que não foi adicionado indicador novo
+- [x] Confirmar escopo exclusivo Atendimentos/Consultas/Exames
+- [x] Revisão cruzada dos pontos de validação humana (se houver)
+- [x] Checklist de fechamento
+
+#### Entrega da T-08 (revisão final e encerramento do ciclo PLAN-002)
+
+- **Sem indicador novo:** `Dashboard.Core` **sem diff** (nenhum novo
+  `IIndicatorRepository`/indicador consolidado); contagem de testes Core inalterada (9);
+  nenhum projeto/referência nova no `Dashboard.slnx`.
+- **Escopo exclusivo:** alterações limitadas aos 3 PageModels e 3 `.cshtml`
+  (Atendimentos/Consultas/Exames), aos 3 `*ConvenioNominalRepository`, ao wiring de DI em
+  `Program.cs` (T-05), a `site.css`/`dashboard.js`/`Index.cshtml` (navegação UX aprovada na
+  T-06) e ao próprio plano. **Nenhuma página/rota nova** (apenas `Index` + os 3 indicadores +
+  Shared existem em `Dashboard.Web/Pages`).
+- **Pontos de validação humana — revisão cruzada:** DEC-003-01..06 aprovadas (gate
+  2026-10-02); reconstrução do PRD-003 + L1/L4 (gate 2026-10-05); escopo interpretado da
+  T-06 (gate 2026-10-06). **Nenhum ponto de validação humana obrigatório marcado dentro de
+  T-07/T-08** (o plano não declara gate próprio nessas duas tarefas); a revisão desta
+  entrega é o gate humana de encerramento do ciclo.
+- **Checklist de fechamento — critérios globais (5/5):** análise por convênio disponível
+  nos 3 indicadores (T-06, verificação analítica acima); arquitetura de 3 camadas
+  unidirecionais intacta (ADR-001; só DI/URLs de apresentação); somente leitura sem
+  persistência (testes estáticos proíbem `INSERT/UPDATE/DELETE/MERGE/DDL/TOP`; sem
+  migrations, sem cache/snapshot); sem quebra de funcionalidades (**72/72 testes**,
+  incluindo suíte pré-existente); sem introdução de novo indicador.
+- **Validação final:** `dotnet build Dashboard.slnx` → 0 avisos / 0 erros;
+  `dotnet test Dashboard.slnx --no-build` → **72/72 aprovados** (9 Core + 63 Data).
+- **Estado do ciclo:** PLAN-002 **T-01..T-08 concluídos**. Evolução gráfica por convênio
+  permanece fora do escopo e **não iniciada**; L2/L3 resolvidas na T-03, R5 resolvida na
+  T-04, divergência de narrativa P19 registrada na T-07 e **reconciliada no gate final**
+  (2026-10-06). Nenhum novo acesso a banco além
+  das integrações read-only previstas; sem servidor; sem Git (nenhum commit realizado —
+  aguarda autorização explícita).
 
 ## Critérios de aceite globais
 
@@ -315,3 +442,22 @@ Nenhuma tarefa foi executada; nenhuma linha de código, teste ou consulta foi al
 
 - Criado na sessão anterior (conceitualmente) — materializado agora em `docs/plans/PLAN-002-analise-por-convenio.md`
 - Correções aplicadas conforme aprovação: remoção da regra "Uma tarefa por commit, com CI verde e verificação de build entre fases"; T-07 passou a depender de T-06; T-08 permanece dependendo de T-06 e T-07
+
+### Encerramento do ciclo PLAN-002 (2026-10-06)
+
+- **Gate humano visual: APROVADO (2026-10-06).** Análise nominal por convênio validada
+  manualmente no navegador com sucesso para o fluxo implementado. **PLAN-002 — Análise por
+  Convênio: ENCERRADO.** Nenhuma pendência funcional aberta dentro do plano.
+- **T-01..T-08 — todos Concluídos.** As notas de 2026-10-05 acima (inclusive "T-03..T-08
+  seguem Pendentes") são estado histórico daquela data e não foram reescritas.
+- **Validação final do ciclo:** `dotnet build Dashboard.slnx` → 0 avisos / 0 erros;
+  `dotnet test Dashboard.slnx --no-build` → **72/72** (9 Core + 63 Data).
+- **Escopo preservado:** sem novo indicador, sem nova rota/página, sem seletor de convênio,
+  sem paginação/Top N/drill-down, sem alteração de autenticação (ADR-009), sem
+  persistência/migrations, somente leitura.
+- **Pendências conhecidas fora do ciclo:** evolução gráfica por convênio (não iniciada, por
+  decisão) e P17 (homologação no banco-alvo SisacHTML5). A divergência de narrativa P19 da
+  T-03 foi **reconciliada neste gate** (2026-10-06) — ver § Entrega da T-03 (nota de
+  reconciliação) e § Entrega da T-07.
+- **Git:** nenhum commit realizado nesta frente — alterações não commitadas aguardam
+  autorização explícita.
