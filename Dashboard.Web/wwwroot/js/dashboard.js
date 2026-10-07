@@ -198,7 +198,8 @@
 
     function renderizarTudo() {
         elemento('status-periodo').textContent = 'Período: ' + fmtData(estado.inicio) + ' a ' + fmtData(estado.fim);
-        elemento('filtro-info').textContent = 'Dados demonstrativos referentes à data atual.';
+        elemento('filtro-info').textContent =
+            'Atendimentos, Consultas e Exames refletem o período selecionado; demais indicadores permanecem demonstrativos.';
 
         indicadores.forEach(function (ind) {
             if (ehReal(ind.id)) {
