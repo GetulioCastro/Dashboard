@@ -462,7 +462,7 @@ Implementar a consulta de Atendimentos conforme o contrato de dados (T-03) e a d
 
 #### T-09 — Implementar query de Consultas em Dashboard.Data
 
-- **Status:** Pendente
+- **Status:** Concluído (reconciliação documental 2026-10-07 — CA-09 com lacuna de validação registrada abaixo)
 - **Complexidade:** Média
 - **Depende de:** T-05, T-07
 - **Implementa:** RN-28, RN-30 *(relação definida pelo novo modelo)*, RN-26 *(cobertura)*
@@ -475,11 +475,31 @@ Implementar a consulta de Atendimentos conforme o contrato de dados (T-03) e a d
 **Descrição:**
 Implementar a consulta de Consultas conforme o contrato de dados (T-03). A query conta as consultas do período filtrado (primeira consulta/retorno conforme definição confirmada — RN-28), filtrada por cobertura (RN-26). A relação com Atendimento/Exame segue o modelo do novo banco (RN-30) — **não** presume hierarquia.
 
+> **Registro de reconciliação documental (2026-10-07):** a entrega **já existia no código** e o
+> plano estava desatualizado; fechamento por evidência física, sem reescrita de histórico.
+> - **Repositório:** `Dashboard.Data/Repositories/ConsultasVisaoRepository.cs` (222 linhas; nome
+>   materializado como `*VisaoRepository` — o previsto `ConsultasRepository.cs` — arquitetura
+>   `IIndicadorVisaoRepository` firmada na T-08); DTO específico `ConsultasDto.cs` **não criado**,
+>   forma = contagem única coberta por `IndicadorVisao`/`IndicatorData` (precedente T-08: "AtendimentosDto não criado").
+> - **RN-28:** `CondicaoTipoConsulta = "E.TIPO = @Tipo"` com `TipoConsulta = "1"`; a distinção
+>   consulta/retorno foi **decidida pelo produto**: retorno fica fora do indicador — coberta pelo
+>   teste `sql_diario_nao_inclui_retorno_pois_retorno_fora_do_indicador_consultas`.
+> - **RN-26 (cobertura):** `ModoPorCobertura` P/C/S + `AtendimentosRepository.ConstruirCondicoesCobertura`.
+> - **Testes do plano:** `CA_11_consultas_no_periodo_retorna_quantidade` e
+>   `CA_18_consultas_por_cobertura_gera_tres_series_sem_exceder_o_total`
+>   (`Dashboard.Data.Tests/Repositories/ConsultasVisaoRepositoryTests.cs:121,154`), na suíte 72/72.
+> - **Em uso:** registrada em `Dashboard.Web/Program.cs:18`; consumida por `Consultas.cshtml.cs:25,62`.
+> - **Commits:** `9ab8f9c` (implementação real de Consultas) + `f59ef75`/`b66e6ba` (ciclo nominal).
+> - **Lacuna declarada (não inventada):** CA-09 (período sem registros → estado vazio) está
+>   materializado no código (`Consultas.cshtml:128-131` + preenchimento de zeros em
+>   `montar_visao_identifica_consultas_e_preenche_dias_sem_consulta_com_zero`), mas **validação
+>   runtime end-to-end de período vazio não está registrada** em documento próprio.
+
 **Critério de aceite (testável):**
-- [ ] Query retorna quantidade de consultas no período (RN-28), distinguindo primeira consulta/retorno quando definido
-- [ ] Filtro por cobertura funciona (RN-26)
-- [ ] Relação com Atendimento segue o contrato do novo modelo (RN-30)
-- [ ] Período sem registros retorna estado vazio (CA-09)
+- [x] Query retorna quantidade de consultas no período (RN-28), distinguindo primeira consulta/retorno quando definido
+- [x] Filtro por cobertura funciona (RN-26)
+- [x] Relação com Atendimento segue o contrato do novo modelo (RN-30)
+- [ ] Período sem registros retorna estado vazio (CA-09) — *código + teste unitário presentes; validação de runtime não registrada (ver registro acima)*
 
 **Testes a escrever:**
 - *Integration:* `CA_11_consultas_no_periodo_retorna_quantidade`
@@ -493,7 +513,7 @@ Implementar a consulta de Consultas conforme o contrato de dados (T-03). A query
 
 #### T-10 — Implementar query de Exames em Dashboard.Data
 
-- **Status:** Pendente
+- **Status:** Concluído (reconciliação documental 2026-10-07 — CA-09 com lacuna de validação registrada abaixo)
 - **Complexidade:** Média
 - **Depende de:** T-05, T-07
 - **Implementa:** RN-29, RN-30, RN-26 *(cobertura)*
@@ -506,11 +526,31 @@ Implementar a consulta de Consultas conforme o contrato de dados (T-03). A query
 **Descrição:**
 Implementar a consulta de Exames conforme o contrato de dados (T-03), contando os exames do período filtrado por tipo/grupo quando aplicável (RN-29), com filtro por cobertura (RN-26) e relação definida pelo novo modelo (RN-30).
 
+> **Registro de reconciliação documental (2026-10-07):** a entrega **já existia no código** e o
+> plano estava desatualizado; fechamento por evidência física, sem reescrita de histórico.
+> - **Repositório:** `Dashboard.Data/Repositories/ExamesVisaoRepository.cs` (222 linhas; nome
+>   materializado como `*VisaoRepository` — o previsto `ExamesRepository.cs` — arquitetura
+>   `IIndicadorVisaoRepository` firmada na T-08); DTO específico `ExamesDto.cs` **não criado**,
+>   forma = contagem única coberta por `IndicadorVisao`/`IndicatorData` (precedente T-08).
+> - **RN-29:** `CondicaoTipoExame = "E.TIPO = @Tipo"` com `TipoExame = "3"` (tipo de exame do
+>   contrato de dados; agrupamento por tipo/grupo não materializado — regra condicional "quando
+>   aplicável" sem definição adicional de produto).
+> - **RN-26 (cobertura):** `ModoPorCobertura` P/C/S + `AtendimentosRepository.ConstruirCondicoesCobertura`.
+> - **Testes do plano:** `CA_12_exames_no_periodo_retorna_quantidade` e
+>   `CA_18_exames_por_cobertura_gera_tres_series_sem_exceder_o_total`
+>   (`Dashboard.Data.Tests/Repositories/ExamesVisaoRepositoryTests.cs:123,181`), na suíte 72/72.
+> - **Em uso:** registrada em `Dashboard.Web/Program.cs:22`; consumida por `Exames.cshtml.cs:24,61`.
+> - **Commits:** `f43aac0` (implementação real de Exames) + `f59ef75`/`b66e6ba` (ciclo nominal).
+> - **Lacuna declarada (não inventada):** CA-09 (período sem registros → estado vazio) está
+>   materializado no código (`Exames.cshtml:128-131` + preenchimento de zeros em
+>   `montar_visao_identifica_exames_e_preenche_dias_sem_exame_com_zero`), mas **validação
+>   runtime end-to-end de período vazio não está registrada** em documento próprio.
+
 **Critério de aceite (testável):**
-- [ ] Query retorna quantidade de exames no período (RN-29), por tipo/grupo quando aplicável
-- [ ] Filtro por cobertura funciona (RN-26)
-- [ ] Relação com Atendimento segue o contrato do novo modelo (RN-30)
-- [ ] Período sem registros retorna estado vazio (CA-09)
+- [x] Query retorna quantidade de exames no período (RN-29), por tipo/grupo quando aplicável
+- [x] Filtro por cobertura funciona (RN-26)
+- [x] Relação com Atendimento segue o contrato do novo modelo (RN-30)
+- [ ] Período sem registros retorna estado vazio (CA-09) — *código + teste unitário presentes; validação de runtime não registrada (ver registro acima)*
 
 **Testes a escrever:**
 - *Integration:* `CA_12_exames_no_periodo_retorna_quantidade`
@@ -974,8 +1014,8 @@ Checkbox de resolução (marcar à medida que forem respondidas):
 | T-06   | Concluído | 2026-09-17 | — | Shell visual criado: `_Layout.cshtml` (Bootstrap 5.3.3 local, navegação padrão preservada), `Index.cshtml` com exatamente **seis placeholders** responsivos (Atendimentos, Consultas, Exames, Faturamento, Produção Médica, Despesas) no texto "Aguardando dados"; `Index.cshtml.cs` não alterado; sem dados/queries/gráficos/filtros/Services; **build 0 avisos/0 erros**; `GET /` = HTTP 200 sem exceção (stderr vazio); Bootstrap **local (sem CDN)**; sem novas dependências; infra T-05 intacta |
 | T-07   | Concluído | 2026-09-18 | `8f9fc6d` | Contratos e DTOs base criados em Dashboard.Core (Core sem dependências — ADR-005): `IIndicatorRepository`, `IndicatorFilter` (período RN-04/42 + cobertura RN-26) e `IndicatorData` (`Value`/`ReferencePeriod`/`UnitOfMeasure`); interface genérica por indicador deliberadamente não criada; build 0 avisos/0 erros |
 | T-08   | Implementado (validação pendente) | 2026-09-18 | — | Investigação técnica T-08 commitada (`5e340cf`); implementação: `AtendimentosRepository` (`ENTRADA`, contagem RN-07 com `COALESCE(LoteEnt,'') <> 'INAT'`, `DATAHORAENT` RN-09, tipo `TIPO` 1–6 + "Não classificado" RN-08, cobertura `CADCONVENIO.MODOFAT` C/P/S RN-26), `PeriodoResolutor` em Core (RN-04/RN-42) e 3 testes de integração `CA_03`/`CA_18`/`ca09`; build 0 avisos/0 erros; testes falham apenas por lacuna de credencial `ConnectionStrings__SisacDatabase` (nenhum resultado inventado); `AtendimentosDto` não criado (forma = contagem única, coberta por `IndicatorData`) |
-| T-09   | Pendente | — | — | — |
-| T-10   | Pendente | — | — | — |
+| T-09   | Concluído | 2026-10-07 | `9ab8f9c` | Reconciliação documental: entrega já existia no código — `ConsultasVisaoRepository.cs` (RN-28 tipo 1 sem retorno, RN-26 cobertura), DI `Program.cs:18`, página `Consultas` em uso; testes `CA_11`/`CA_18` na suíte 72/72; CA-09 com lacuna de validação declarada (ver registro da tarefa) |
+| T-10   | Concluído | 2026-10-07 | `f43aac0` | Reconciliação documental: entrega já existia no código — `ExamesVisaoRepository.cs` (RN-29 tipo 3, RN-26 cobertura), DI `Program.cs:22`, página `Exames` em uso; testes `CA_12`/`CA_18` na suíte 72/72; CA-09 com lacuna de validação declarada (ver registro da tarefa) |
 | T-11   | Pendente | — | — | — |
 | T-12   | Pendente | — | — | — |
 | T-13   | Pendente | — | — | — |

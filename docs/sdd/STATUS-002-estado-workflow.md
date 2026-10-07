@@ -34,7 +34,8 @@
 |---|---|---|
 | T-01..T-07 | Concluído | — |
 | **T-08** | **Implementado e Validado (reconciliado 2026-10-02)** | Integrados CA-03/CA-09/CA-18 (estado reconciliado 2026-10-02) |
-| T-09..T-13, T-19 | Pendente | Elegíveis por dependência — ver §6, tensão objeto de reconciliação documental em 2026-10-02 |
+| **T-09, T-10** | **Concluído (reconciliado 2026-10-07)** | Entregas já existentes no código (`ConsultasVisaoRepository`/`ExamesVisaoRepository`, commits `9ab8f9c`/`f43aac0`) — PLAN-001 atualizado por reconciliação documental, sem reescrita de histórico; CA-09 com lacuna de validação declarada |
+| T-11..T-13, T-19 | Pendente | Elegíveis por dependência — ver §6, tensão objeto de reconciliação documental em 2026-10-02 |
 | T-14..T-18, T-20, T-21 | Pendente | Bloqueadas |
 
 ### 3.1 — PLAN-002 (Análise por Convênio) — registro aditivo (2026-10-05)
@@ -180,6 +181,10 @@ O grafo de dependências marca T-09..T-13 e T-19 como elegíveis, mas o
 `REVIEW-T-08-2026-09-18` orienta explicitamente: *"não avançar a T-09"* enquanto
 R-01..R-05 estiverem abertos. As duas leituras não concordam. Decidir antes de
 retomar a execução.
+
+> **Atualização (2026-10-07):** T-09 e T-10 foram reconciliadas como **Concluídas** (§3) — a
+> tensão remanescente aplica-se a T-11..T-13/T-19. A decisão humana de 2026-10-07 definiu
+> **T-14 como próxima frente técnica** (pendente de execução; não iniciada).
 
 Em 2026-10-02, por reconciliação documental autorizada, diferenciou-se ESTADO HISTÓRICO (documentos antigos, inalterados, refletindo bloqueios das respectivas datas) de ESTADO RECONCILIADO (2026-10-02): R-01, R-02, R-03/P19 e R-05 encontram-se RESOLVIDOS posteriormente; R-04 encontra-se SUPERADO pelas validações/testes posteriores. As divergências documentais registradas em §5 não foram alteradas. Os handoffs históricos permanecem inalterados.
 
