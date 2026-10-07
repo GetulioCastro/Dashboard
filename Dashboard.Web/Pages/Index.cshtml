@@ -62,7 +62,9 @@
     <div class="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-4">
         @foreach (var indicador in Model.Indicadores)
         {
-            var rotaDetalhada = rotasDetalhadas.TryGetValue(indicador.Id, out var pagina) ? Url.Page(pagina) : null;
+            var rotaDetalhada = rotasDetalhadas.TryGetValue(indicador.Id, out var pagina)
+                ? Url.Page(pagina, values: new { dimensao = "convenio", forma = "coluna" })
+                : null;
             <div class="col">
                 <section class="card h-100 shadow-sm ind-card" id="card-@indicador.Id" data-indicador="@indicador.Id" aria-label="@indicador.Nome"
                          data-href="@rotaDetalhada"

@@ -288,13 +288,35 @@
             alvo.closest('button, a, input, select, textarea, label, [data-no-nav]') !== null;
     }
 
+    function urlComPeriodo(base) {
+        if (!base) {
+            return base;
+        }
+        var sep = base.indexOf('?') === -1 ? '?' : '&';
+        return base + sep + 'DataInicial=' + estado.inicio + '&DataFinal=' + estado.fim;
+    }
+
+    document.querySelectorAll('.menu-lateral a[href]').forEach(function (link) {
+        var destino = link.getAttribute('href');
+        var ehIndicadorMenu = destino === '/Atendimentos' || destino === '/Consultas' || destino === '/Exames';
+
+        if (!ehIndicadorMenu) {
+            return;
+        }
+
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            window.location.href = urlComPeriodo(destino);
+        });
+    });
+
     document.querySelectorAll('.ind-card[data-href]').forEach(function (card) {
         card.addEventListener('click', function (e) {
             if ((e.button != null && e.button !== 0) || e.defaultPrevented || ehControleInterno(e.target)) {
                 return;
             }
 
-            window.location.href = navegacaoDoCard(card);
+            window.location.href = urlComPeriodo(navegacaoDoCard(card));
         });
 
         card.addEventListener('keydown', function (e) {
@@ -303,7 +325,7 @@
             }
 
             e.preventDefault();
-            window.location.href = navegacaoDoCard(card);
+            window.location.href = urlComPeriodo(navegacaoDoCard(card));
         });
     });
 

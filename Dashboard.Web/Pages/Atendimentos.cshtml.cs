@@ -52,8 +52,13 @@ public class AtendimentosModel : PageModel
         string? forma = null,
         DateOnly? inicio = null,
         DateOnly? fim = null,
+        DateOnly? dataInicial = null,
+        DateOnly? dataFinal = null,
         CancellationToken cancellationToken = default)
     {
+        inicio ??= dataInicial;
+        fim ??= dataFinal;
+
         IndicatorFilter filtro = MontarFiltro(inicio, fim);
         Periodo = PeriodoResolutor.Resolver(filtro);
 
