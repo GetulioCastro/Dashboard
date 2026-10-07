@@ -1,7 +1,7 @@
 # STATUS-002 — Estado do Workflow (transição Leanwork SDD + Atendimentos Reais)
 
 > **Tipo:** estado do workflow — recuperação persistente entre sessões
-> **Data:** 2026-10-06 (origem: 2026-09-28)
+> **Data:** 2026-10-07 (origem: 2026-09-28; última atualização anterior: 2026-10-06)
 > **Substitui:** `STATUS-001-checkpoint-kickoff.md` (2026-09-16) — **preservado,
 > não apagado**; descreve o kick off, hoje superado
 > **Regra:** ao encerrar uma sessão, ATUALIZE este arquivo. Não crie handoff novo
@@ -11,8 +11,10 @@
 1. `AGENTS.md` — regras permanentes, stack, comandos
 2. Este arquivo — estado atual
 3. `docs/plans/PLAN-001-dashboard-indicadores.md` — tarefas T-XX
-4. `docs/reviews/` — findings R-XX
-5. `docs/handoffs/` — histórico como evidência; não reabrir
+4. `docs/plans/PLAN-002-analise-por-convenio.md` — tarefas T-XX (ciclo encerrado)
+5. `docs/plans/PLAN-003-visualizacao-grafica-por-convenio.md` — tarefas P3-TXX (ciclo encerrado)
+6. `docs/reviews/` — findings R-XX
+7. `docs/handoffs/` — histórico como evidência; não reabrir
 
 ## 2. Fase atual
 | Fase | Artefato | Estado |
@@ -21,7 +23,8 @@
 | Requisitos | PRD-001 (Epic) / PRD-002 (Atendimentos) | Rascunho — revisão 2 |
 | Especificação | SPEC-UI-001, SPEC-VIS-001 | Aguardando validação humana |
 | Plano | PLAN-001 (T-01..T-21) | Execução em andamento |
-| Plano | PLAN-002 (T-01..T-08) — Análise por Convênio | **ENCERRADO (2026-10-06)** — T-01..T-08 concluídas, build 0/0, 72/72 testes, P19 reconciliado, UI integrada, **gate humano visual aprovado (2026-10-06)**; sem pendência funcional aberta; evolução gráfica não iniciada |
+| Plano | PLAN-002 (T-01..T-08) — Análise por Convênio | **ENCERRADO (2026-10-06)** — T-01..T-08 concluídas, build 0/0, 72/72 testes, P19 reconciliado, UI integrada, **gate humano visual aprovado (2026-10-06)**; sem pendência funcional aberta; evolução gráfica não iniciada *(afirmação correta em 2026-10-06; a evolução gráfica foi executada depois, em 2026-10-07 — ver linha seguinte)* |
+| Plano | PLAN-003 (P3-T01..P3-T05) — Visualização Gráfica por Convênio | **ENCERRADO (2026-10-07)** — registro retroativo; gráfico horizontal SVG em Atendimentos, Consultas e Exames; responsividade validada (DevTools mobile); build 0/0, 72/72 testes, validações humanas concluídas; commits `0038c54`, `6619782`, `2c62fae`, `e9a3917` |
 | Revisão | REVIEW-T-08-2026-09-18 | Aprovado com ressalvas |
 
 > **Nota de reconciliação (2026-10-02):** Reconciliação documental do estado do workflow realizada sem alterar documentos históricos.
@@ -46,7 +49,7 @@ Novo plano, **independente** do grafo T-01..T-21 do PLAN-001. Não altera o esta
 | **T-05** — Integrar no backend Web (PageModel) filtros por Convênio | **Concluído** (2026-10-05) | Registrados os três repositórios nominais na DI do Web (`IIndicadorConvenioNominalRepository` → Atendimentos/Consultas/Exames). Sem alteração de UI, sem alteração de autenticação, sem impacto em repositórios/contratos existentes. Build 0 avisos/0 erros; 48 testes aprovados. |
 | **T-06** — UI da seção nos 3 indicadores | **Concluído** (2026-10-06) | Seção `<details>` expansível com tabela, estados vazio/erro e navegação dos cards preservada; entrega registrada em `PLAN-002` (§ Entrega da T-06) |
 | **T-07** — Testes CA-003-01..07 | **Concluído** (2026-10-06) | `ConvenioNominalRepositoryTests.cs`: 24 testes novos (16 SQL estático + 8 integração); CA-003-01/03/04/07 automatizados, CA-003-02/05/06 por regressão + revisão analítica de UI; suíte **72/72**; divergência de narrativa P19 (T-03 vs SQL) **reconciliada no gate humano final (2026-10-06)** — narrativa corrigida, P19 aplicado |
-| **T-08** — Revisão final e escopo | **Concluído** (2026-10-06) | Checklist 4/4 e critérios globais 5/5; sem indicador novo, escopo exclusivo dos 3 indicadores, nenhuma rota nova; **ciclo PLAN-002 encerrado** (T-01..T-08 concluídos); evolução gráfica não iniciada |
+| **T-08** — Revisão final e escopo | **Concluído** (2026-10-06) | Checklist 4/4 e critérios globais 5/5; sem indicador novo, escopo exclusivo dos 3 indicadores, nenhuma rota nova; **ciclo PLAN-002 encerrado** (T-01..T-08 concluídos); evolução gráfica não iniciada *(correto na data da tarefa; executada depois em 2026-10-07 pelo PLAN-003 — ver §3.2)* |
 
 **T-02 — CONCLUÍDA em 2026-10-05 (contratos Core, RN-003-03/RN-003-04, valida CA-003-02).**
 Criados `Dashboard.Core/DTOs/IndicadorConvenioNominal.cs` (`ConvenioNominalVolume`,
@@ -95,6 +98,27 @@ nos 3 repositórios nominais, sem contradizer DEC-003-01/DEC-003-06.
 **Colisão de nomenclatura:** `DimensaoVisao.Convenio` e `CoverageCategory.Convenio` já significam **cobertura** (Particular/Convênio/SUS), não convênio individual — não reutilizar. Materializado como RN-003-03 e CA-003-02.
 
 **Reconciliação do PLAN-002 (2026-10-05):** o mapeamento `Decisões base:` foi corrigido de **posicional** (T-0*n* → DEC-003-0*n*) para **semântico** — T-04 passa a DEC-003-01 + DEC-003-06; T-06 passa a DEC-003-02..DEC-003-05 + SPEC-UI-003; T-01/T-02/T-03/T-05/T-07 sem DEC de apresentação. Nenhum checkbox de escopo funcional alterado. SPEC-UI-003, ADR, PRD-001, PRD-002, PLAN-001 e código **não alterados**.
+
+### 3.2 — PLAN-003 (Visualização Gráfica por Convênio) — registro aditivo (2026-10-07)
+
+Plano **retroativo**, criado sob decisão humana no fechamento documental de 2026-10-07
+(`docs/plans/PLAN-003-visualizacao-grafica-por-convenio.md`). Independente do PLAN-001 e do
+PLAN-002; usa IDs `P3-TXX` próprios para **evitar colisão** com as tarefas `T-XX` dos planos
+anteriores. Não altera o estado das §3 e §3.1.
+
+| Tarefa | Status | Evidência |
+|---|---|---|
+| **P3-T01** — Preparação/definição do padrão gráfico por convênio | **Concluído** (2026-10-07) | Diagnóstico: infraestrutura nominal completa nas 3 páginas (seção, tabela, `Model.ConvenioNominal`, Identificacao + Volume); regra de negócio confirmada preservada |
+| **P3-T02** — Atendimentos por Convênio | **Concluído** (2026-10-07) | Commit `0038c54`; validação visual humana concluída; build 0/0; 72/72 testes |
+| **P3-T03** — Consultas por Convênio | **Concluído** (2026-10-07) | Commit `6619782`; validação visual humana concluída; implementação single-file; regra `TIPO = '1'` intacta; build 0/0; 72/72 testes |
+| **P3-T04** — Exames por Convênio | **Concluído** (2026-10-07) | Commit `2c62fae`; validação visual humana concluída; implementação single-file; regra `TIPO = '3'` intacta; build 0/0; 72/72 testes |
+| **P3-T05** — Consistência/responsividade e validação global | **Concluído** (2026-10-07) | Commit `e9a3917` (`.convenio-rolagem svg { min-width: 40rem; }` em `site.css`); consistência estrutural 10/10 entre as 3 páginas; validação mobile via DevTools; validação global: repo limpo, build 0/0, 72/72 testes, nenhum bloqueador |
+
+**Decisões do ciclo:** SVG nativo, barras horizontais, gráfico antes da tabela, todos os
+convênios preservados (sem Top N, sem "Outros", sem agregação), nomes completos na tabela,
+scroll vertical preservado, sem Chart.js, padrão idêntico nos 3 indicadores.
+**Fora do ciclo (não executado):** Top 10 + "Demais convênios", comparativo
+Consultas × Exames, redesign de identidade visual.
 
 ## 4. R-05 — pendência aberta (bloqueio externo)
 
