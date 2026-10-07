@@ -65,9 +65,11 @@
             var rotaDetalhada = rotasDetalhadas.TryGetValue(indicador.Id, out var pagina)
                 ? Url.Page(pagina, values: new { dimensao = "convenio", forma = "coluna" })
                 : null;
+            var ehReal = indicador.Id is "atendimentos" or "consultas" or "exames";
             <div class="col">
                 <section class="card h-100 shadow-sm ind-card" id="card-@indicador.Id" data-indicador="@indicador.Id" aria-label="@indicador.Nome"
                          data-href="@rotaDetalhada"
+                         data-real="@(ehReal ? "true" : null)"
                          role="@(rotaDetalhada is null ? null : "link")"
                          tabindex="@(rotaDetalhada is null ? null : "0")">
                     <div class="card-header bg-white d-flex align-items-center justify-content-between gap-2">
@@ -80,13 +82,16 @@
                     </div>
                     <div class="card-body d-flex flex-column">
                         <div class="d-flex align-items-baseline gap-2 mb-2">
-                            <span class="ind-valor" data-valor="@indicador.Id">@indicador.ValorReferencia.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)</span>
+                            <span class="ind-valor" data-valor="@indicador.Id">@(ehReal ? "—" : indicador.ValorReferencia.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))</span>
                             <span class="ind-unidade small">@indicador.Unidade</span>
                         </div>
                         <div class="grafico flex-grow-1" data-grafico="@indicador.Id">
-                            <svg viewBox="0 0 220 170" role="img" aria-label="Gráfico de @indicador.Nome"></svg>
+                            @if (!ehReal)
+                            {
+                                <svg viewBox="0 0 220 170" role="img" aria-label="Gráfico de @indicador.Nome"></svg>
+                            }
                         </div>
-                        <div class="small text-muted mt-2" data-referencia-caption="@indicador.Id">Período: mês corrente</div>
+                        <div class="small text-muted mt-2" data-referencia-caption="@indicador.Id">@(ehReal ? "—" : "Período: mês corrente")</div>
                     </div>
                 </section>
             </div>

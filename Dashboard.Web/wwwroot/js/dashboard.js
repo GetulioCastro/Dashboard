@@ -13,6 +13,17 @@
         maximizado: ''
     };
 
+    var idsReais = [];
+    document.querySelectorAll('.ind-card[data-real="true"]').forEach(function (card) {
+        idsReais.push(card.getAttribute('data-indicador'));
+    });
+    var reais = {};
+    var versaoReais = 0;
+
+    function ehReal(id) {
+        return idsReais.indexOf(id) !== -1;
+    }
+
     var paleta = ['#0d6efd', '#198754', '#0dcaf0', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14'];
 
     function elemento(id) {
@@ -190,6 +201,10 @@
         elemento('filtro-info').textContent = 'Dados demonstrativos referentes à data atual.';
 
         indicadores.forEach(function (ind) {
+            if (ehReal(ind.id)) {
+                return;
+            }
+
             var pontos = pontosFiltrados(ind);
             var total = pontos.reduce(function (s, p) { return s + p.valor; }, 0);
             var elValor = document.querySelector('[data-valor="' + ind.id + '"]');
@@ -201,6 +216,86 @@
 
             renderizarSvg(container, agrupar(pontos), ind.forma, corPara(ind.id), 220, 170);
         });
+    }
+
+    function pintarCardReal(id) {
+        var elValor = document.querySelector('[data-valor="' + id + '"]');
+        var elCaption = document.querySelector('[data-referencia-caption="' + id + '"]');
+        if (!elValor || !elCaption) {
+            return;
+        }
+
+        var info = reais[id];
+        if (!info) {
+            elValor.textContent = '—';
+            elCaption.textContent = '—';
+            return;
+        }
+
+        if (!info.disponivel) {
+            elValor.textContent = '—';
+            elCaption.textContent = 'Indisponível';
+            return;
+        }
+
+        elValor.textContent = fmtNumero(info.valor);
+        elCaption.textContent = 'Período: ' + fmtData(info.dataInicial) + ' a ' + fmtData(info.dataFinal);
+    }
+
+    function carregarIndicadoresReais() {
+        versaoReais += 1;
+        var versao = versaoReais;
+
+        idsReais.forEach(function (id) {
+            delete reais[id];
+            pintarCardReal(id);
+        });
+
+        var url = window.location.pathname +
+            '?handler=IndicadoresReais&DataInicial=' + estado.inicio + '&DataFinal=' + estado.fim;
+
+        fetch(url, { headers: { 'Accept': 'application/json' } })
+            .then(function (resposta) {
+                if (!resposta.ok) {
+                    throw new Error('HTTP ' + resposta.status);
+                }
+                return resposta.json();
+            })
+            .then(function (dados) {
+                if (versao !== versaoReais) {
+                    return;
+                }
+
+                (dados.indicadores || []).forEach(function (item) {
+                    reais[item.id] = {
+                        disponivel: item.disponivel === true,
+                        valor: item.valor,
+                        unidade: item.unidade,
+                        mensagem: item.mensagem,
+                        dataInicial: dados.dataInicial,
+                        dataFinal: dados.dataFinal
+                    };
+                    pintarCardReal(item.id);
+                });
+
+                idsReais.forEach(function (id) {
+                    if (!reais[id]) {
+                        reais[id] = { disponivel: false };
+                        pintarCardReal(id);
+                    }
+                });
+            })
+            .catch(function (erro) {
+                if (versao !== versaoReais) {
+                    return;
+                }
+
+                console.error('Falha ao carregar os indicadores reais da Home.', erro);
+                idsReais.forEach(function (id) {
+                    reais[id] = { disponivel: false };
+                    pintarCardReal(id);
+                });
+            });
     }
 
     function aplicarFiltro() {
@@ -224,6 +319,7 @@
         estado.inicio = a;
         estado.fim = b;
         renderizarTudo();
+        carregarIndicadoresReais();
     }
 
     elemento('btn-aplicar').addEventListener('click', aplicarFiltro);
@@ -253,6 +349,7 @@
             elemento('filtro-inicio').value = estado.inicio;
             elemento('filtro-fim').value = estado.fim;
             renderizarTudo();
+            carregarIndicadoresReais();
         });
     });
 
@@ -350,6 +447,20 @@
             return;
         }
 
+        if (ehReal(ind.id)) {
+            var infoReal = reais[ind.id];
+            if (infoReal && infoReal.disponivel) {
+                elemento('modal-valor').textContent = fmtNumero(infoReal.valor);
+                elemento('modal-periodo').textContent =
+                    'Período: ' + fmtData(infoReal.dataInicial) + ' a ' + fmtData(infoReal.dataFinal);
+            } else {
+                elemento('modal-valor').textContent = '—';
+                elemento('modal-periodo').textContent = 'Indisponível';
+            }
+            elemento('modal-grafico').innerHTML = '<div class="grafico-vazio">Gráfico indisponível.</div>';
+            return;
+        }
+
         var pontos = pontosFiltrados(ind);
         var total = pontos.reduce(function (s, p) { return s + p.valor; }, 0);
 
@@ -363,4 +474,5 @@
     elemento('filtro-inicio').value = estado.inicio;
     elemento('filtro-fim').value = estado.fim;
     renderizarTudo();
+    carregarIndicadoresReais();
 })();
