@@ -93,11 +93,11 @@ public class IndexModel : PageModel
         {
             IndicadorVisao visao = await repositorio.ObterVisaoAsync(
                 filtro,
-                DimensaoVisao.Convenio,
+                DimensaoVisao.Nenhuma,
                 GraficoForma.Coluna,
                 cancellationToken);
 
-            return new IndicadorRealResposta(id, true, visao.ValorTotal, visao.Unidade, string.Empty);
+            return ConstruirRespostaReal(id, visao);
         }
         catch (OperationCanceledException)
         {
@@ -118,6 +118,28 @@ public class IndexModel : PageModel
 
     private static IndicadorRealResposta IndicadorIndisponivel(string id, string mensagem) =>
         new(id, false, null, string.Empty, mensagem);
+
+    private static IndicadorRealResposta ConstruirRespostaReal(string id, IndicadorVisao visao)
+    {
+        SerieGrafico? serie = visao.Series.FirstOrDefault(s => s.Pontos is { Count: > 0 });
+
+        if (serie is null)
+        {
+            return new IndicadorRealResposta(id, true, visao.ValorTotal, visao.Unidade, string.Empty);
+        }
+
+        List<PontoRealResposta> pontos =
+        [.. serie.Pontos.Select(ponto => new PontoRealResposta(ponto.Data, ponto.Valor))];
+
+        return new IndicadorRealResposta(
+            id,
+            true,
+            visao.ValorTotal,
+            visao.Unidade,
+            string.Empty,
+            serie.Cor,
+            pontos);
+    }
 
     private static ContentResult RespostaIndicadoresReais(
         DateOnly? dataInicial,
@@ -141,7 +163,11 @@ public class IndexModel : PageModel
         bool Disponivel,
         decimal? Valor,
         string Unidade,
-        string Mensagem);
+        string Mensagem,
+        string? Cor = null,
+        List<PontoRealResposta>? Pontos = null);
+
+    private sealed record PontoRealResposta(DateOnly Data, decimal Valor);
 
     private sealed record RespostaIndicadoresReaisPayload(
         DateOnly? DataInicial,

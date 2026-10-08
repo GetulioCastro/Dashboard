@@ -25,6 +25,7 @@
     }
 
     var paleta = ['#0d6efd', '#198754', '#0dcaf0', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14'];
+    var corRealPadrao = '#0d6efd';
 
     function elemento(id) {
         return document.getElementById(id);
@@ -219,10 +220,36 @@
         });
     }
 
+    function renderizarGraficoReal(info, container, largura, altura) {
+        if (!info || !info.disponivel) {
+            container.innerHTML = '<div class="grafico-vazio">Gráfico indisponível.</div>';
+            return;
+        }
+
+        if (info.valor === 0) {
+            container.innerHTML = '<div class="grafico-vazio">Sem movimento no período.</div>';
+            return;
+        }
+
+        if (!Array.isArray(info.pontos) || info.pontos.length === 0) {
+            container.innerHTML = '<div class="grafico-vazio">Gráfico indisponível.</div>';
+            return;
+        }
+
+        renderizarSvg(
+            container,
+            agrupar(pontosFiltrados(info)),
+            'coluna',
+            info.cor || corRealPadrao,
+            largura,
+            altura);
+    }
+
     function pintarCardReal(id) {
         var elValor = document.querySelector('[data-valor="' + id + '"]');
         var elCaption = document.querySelector('[data-referencia-caption="' + id + '"]');
-        if (!elValor || !elCaption) {
+        var container = document.querySelector('[data-grafico="' + id + '"]');
+        if (!elValor || !elCaption || !container) {
             return;
         }
 
@@ -230,17 +257,20 @@
         if (!info) {
             elValor.textContent = '—';
             elCaption.textContent = '—';
+            container.innerHTML = '';
             return;
         }
 
         if (!info.disponivel) {
             elValor.textContent = '—';
             elCaption.textContent = 'Indisponível';
+            container.innerHTML = '<div class="grafico-vazio">Gráfico indisponível.</div>';
             return;
         }
 
         elValor.textContent = fmtNumero(info.valor);
         elCaption.textContent = 'Período: ' + fmtData(info.dataInicial) + ' a ' + fmtData(info.dataFinal);
+        renderizarGraficoReal(info, container, 220, 170);
     }
 
     function carregarIndicadoresReais() {
@@ -273,6 +303,8 @@
                         valor: item.valor,
                         unidade: item.unidade,
                         mensagem: item.mensagem,
+                        cor: item.cor,
+                        pontos: item.pontos,
                         dataInicial: dados.dataInicial,
                         dataFinal: dados.dataFinal
                     };
@@ -450,15 +482,21 @@
 
         if (ehReal(ind.id)) {
             var infoReal = reais[ind.id];
-            if (infoReal && infoReal.disponivel) {
-                elemento('modal-valor').textContent = fmtNumero(infoReal.valor);
-                elemento('modal-periodo').textContent =
-                    'Período: ' + fmtData(infoReal.dataInicial) + ' a ' + fmtData(infoReal.dataFinal);
-            } else {
-                elemento('modal-valor').textContent = '—';
-                elemento('modal-periodo').textContent = 'Indisponível';
+            var modalValor = elemento('modal-valor');
+            var modalPeriodo = elemento('modal-periodo');
+            var modalGrafico = elemento('modal-grafico');
+
+            if (!infoReal || !infoReal.disponivel) {
+                modalValor.textContent = '—';
+                modalPeriodo.textContent = 'Indisponível';
+                modalGrafico.innerHTML = '<div class="grafico-vazio">Gráfico indisponível.</div>';
+                return;
             }
-            elemento('modal-grafico').innerHTML = '<div class="grafico-vazio">Gráfico indisponível.</div>';
+
+            modalValor.textContent = fmtNumero(infoReal.valor);
+            modalPeriodo.textContent =
+                'Período: ' + fmtData(infoReal.dataInicial) + ' a ' + fmtData(infoReal.dataFinal);
+            renderizarGraficoReal(infoReal, modalGrafico, 900, 380);
             return;
         }
 
