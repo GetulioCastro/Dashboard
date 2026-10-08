@@ -1,7 +1,7 @@
 # STATUS-002 — Estado do Workflow (transição Leanwork SDD + Atendimentos Reais)
 
 > **Tipo:** estado do workflow — recuperação persistente entre sessões
-> **Data:** 2026-10-07 (origem: 2026-09-28; última atualização anterior: 2026-10-06)
+> **Data:** 2026-10-08 (origem: 2026-09-28; última atualização anterior: 2026-10-07)
 > **Substitui:** `STATUS-001-checkpoint-kickoff.md` (2026-09-16) — **preservado,
 > não apagado**; descreve o kick off, hoje superado
 > **Regra:** ao encerrar uma sessão, ATUALIZE este arquivo. Não crie handoff novo
@@ -22,7 +22,7 @@
 | Arquitetura | `docs/architecture/proposta-arquitetural.md` + ADR-007..010 | Aprovada |
 | Requisitos | PRD-001 (Epic) / PRD-002 (Atendimentos) | Rascunho — revisão 2 |
 | Especificação | SPEC-UI-001, SPEC-VIS-001 | Aguardando validação humana |
-| Plano | PLAN-001 (T-01..T-21) | Execução em andamento |
+| Plano | PLAN-001 (T-01..T-21) | Execução em andamento — **T-14 CONCLUÍDA** (entrega 2026-10-07, extensão de mini-gráficos reais 2026-10-08, fechamento documental 2026-10-08; §3.3 e §3.3.1) |
 | Plano | PLAN-002 (T-01..T-08) — Análise por Convênio | **ENCERRADO (2026-10-06)** — T-01..T-08 concluídas, build 0/0, 72/72 testes, P19 reconciliado, UI integrada, **gate humano visual aprovado (2026-10-06)**; sem pendência funcional aberta; evolução gráfica não iniciada *(afirmação correta em 2026-10-06; a evolução gráfica foi executada depois, em 2026-10-07 — ver linha seguinte)* |
 | Plano | PLAN-003 (P3-T01..P3-T05) — Visualização Gráfica por Convênio | **ENCERRADO (2026-10-07)** — registro retroativo; gráfico horizontal SVG em Atendimentos, Consultas e Exames; responsividade validada (DevTools mobile); build 0/0, 72/72 testes, validações humanas concluídas; commits `0038c54`, `6619782`, `2c62fae`, `e9a3917` |
 | Revisão | REVIEW-T-08-2026-09-18 | Aprovado com ressalvas |
@@ -36,7 +36,8 @@
 | **T-08** | **Implementado e Validado (reconciliado 2026-10-02)** | Integrados CA-03/CA-09/CA-18 (estado reconciliado 2026-10-02) |
 | **T-09, T-10** | **Concluído (reconciliado 2026-10-07)** | Entregas já existentes no código (`ConsultasVisaoRepository`/`ExamesVisaoRepository`, commits `9ab8f9c`/`f43aac0`) — PLAN-001 atualizado por reconciliação documental, sem reescrita de histórico; CA-09 com lacuna de validação declarada |
 | T-11..T-13, T-19 | Pendente | Elegíveis por dependência — ver §6, tensão objeto de reconciliação documental em 2026-10-02 |
-| T-14..T-18, T-20, T-21 | Pendente | Bloqueadas |
+| **T-14** | **Concluído** (entrega e validação 2026-10-07; extensão de mini-gráficos reais 2026-10-08; fechamento documental 2026-10-08) | — (registros em §3.3 e §3.3.1) |
+| T-15..T-18, T-20, T-21 | Pendente | Bloqueadas |
 
 ### 3.1 — PLAN-002 (Análise por Convênio) — registro aditivo (2026-10-05)
 
@@ -121,6 +122,73 @@ scroll vertical preservado, sem Chart.js, padrão idêntico nos 3 indicadores.
 **Fora do ciclo (não executado):** Top 10 + "Demais convênios", comparativo
 Consultas × Exames, redesign de identidade visual.
 
+### 3.3 — PLAN-001 / T-14 — registro aditivo (2026-10-08)
+
+Registro aditivo do fechamento documental da **T-14** (PLAN-001). Não altera o conteúdo das
+seções anteriores; o texto da §6 que descrevia T-14 como "próxima frente, pendente" **mantém-se
+como estado anterior** e é contextualizado ao final desta seção.
+
+| Tarefa | Status | Evidência |
+|---|---|---|
+| **T-14** — Cards dos indicadores assistenciais (Atendimentos, Consultas, Exames) | **Concluído** (entrega e validação humana 2026-10-07; extensão de mini-gráficos reais validada e commitada em 2026-10-08; fechamento documental 2026-10-08) | Commits `a1159c1`, `61ca098`, `100ba8f`, **`64c93af`**; build Release **0 erros / 0 avisos**; testes **72/72**; validação runtime humana concluída (2026-10-07 e 2026-10-08); repositório versionado |
+
+**Estado registrado:**
+
+- A **Home opera em modo híbrido**: **Atendimentos**, **Consultas** e **Exames** com dados
+  **reais**; os demais indicadores permanecem **demonstrativos**;
+- o **filtro de período da Home** atualiza os 3 indicadores reais, por handler Razor Pages
+  dedicado; os dados reais **não usam** fallback demonstrativo;
+- valor **zero real** é distinguível de **indicador indisponível**; mini-gráficos
+  demonstrativos **neutralizados** nos 3 cards reais;
+- navegação Home → detalhe **preserva o período** em Atendimentos, Consultas e Exames;
+  aliases `DataInicial`/`DataFinal` corrigidos em Consultas e Exames;
+- textos da Home ajustados para refletir o estado híbrido (commit `100ba8f`);
+- validação visual humana concluída; build **0/0**; testes **72/72**.
+
+### 3.3.1 — Extensão final da T-14 — mini-gráficos reais (aditivo, 2026-10-08)
+
+Registro **aditivo** da extensão aprovada como *extensão pequena da T-14* (não nova frente
+arquitetural). Commit **`64c93af`** — `feat(dashboard): add real charts to assistential home cards`.
+Arquivos alterados: somente `Dashboard.Web/Pages/Index.cshtml.cs` e
+`Dashboard.Web/wwwroot/js/dashboard.js`.
+
+- **Atendimentos, Consultas e Exames** exibem **valor real + mini-gráfico real + período real**;
+- dados demonstrativos **não participam** dos 3 cards reais (valor, gráfico e cor);
+- a Home passou a usar **`DimensaoVisao.Nenhuma`**, obtendo a evolução temporal consolidada;
+- pontos reais extraídos de `IndicadorVisao.Series` → `SerieGrafico.Pontos`
+  (`{ data, valor }` no JSON); cor extraída da **`SerieGrafico` real**;
+- o **modal Maximizar** reutiliza o mesmo conjunto de pontos em memória — **sem novo fetch**;
+- **período com valor real zero:** valor = `0`, gráfico = *"Sem movimento no período."*
+  (zero não é indisponibilidade);
+- **indicador indisponível:** valor = `—`, caption *"Indisponível"*, gráfico
+  *"Gráfico indisponível."*;
+- o handler `OnGetIndicadoresReaisAsync` permanece como **fonte única** dos 3 cards reais;
+- **otimização: 12 → 3 queries por atualização** (1 por indicador; antes 4 × 3 por
+  `DimensaoVisao.Convenio`);
+- **sem** SQL novo, **sem** repository novo, **sem** service layer nova, **sem** biblioteca
+  gráfica nova.
+
+**Validação humana final (runtime, 2026-10-08):** Home com mini-gráficos reais; mudança de
+período atualiza valor e gráfico em conjunto; estado **zero real** observado em Exames; modal
+Maximizar com gráfico real; navegação Home → detalhe preservando período; build Release
+**0 erros / 0 avisos**; testes **72/72**.
+
+**Decisão humana — `_IndicatorCard.cshtml` (08/10/2026): DISPENSADO.**
+> "A criação do partial `_IndicatorCard.cshtml` foi dispensada. A implementação reutilizou o
+> loop e a estrutura de cards já existentes em `Index.cshtml`, sem necessidade de nova
+> abstração."
+
+O partial **não foi criado e não será criado retroativamente**; o artefato permanece **não
+entregue literalmente** e sua ausência **não é bloqueante** — T-14 permanece **Concluída**.
+
+**Risco registrado, sem tratamento nesta tarefa:** período **sem teto máximo** — intervalos
+muito longos geram linhas/payload proporcionais; decisão futura.
+
+**Contextualização do texto anterior (§6):** a nota de 2026-10-07 que definia T-14 como
+"próxima frente técnica (pendente de execução; não iniciada)" **refletia o estado daquela data**
+e permanece preservada. A T-14 foi executada e validada no mesmo ciclo, em 2026-10-07, e
+fechada documentalmente em 2026-10-08. **T-15 permanece Pendente** e não foi iniciada.
+
 ## 4. R-05 — pendência aberta (bloqueio externo)
 
 **Sequência registrada dos fatos (2026-09-28):**
@@ -185,6 +253,11 @@ retomar a execução.
 > **Atualização (2026-10-07):** T-09 e T-10 foram reconciliadas como **Concluídas** (§3) — a
 > tensão remanescente aplica-se a T-11..T-13/T-19. A decisão humana de 2026-10-07 definiu
 > **T-14 como próxima frente técnica** (pendente de execução; não iniciada).
+
+> **Atualização (2026-10-08):** a T-14 foi executada, validada em runtime em 2026-10-07 e
+> fechada documentalmente em 2026-10-08 — ver §3.3. A nota acima permanece como registro do
+> estado de 2026-10-07. **T-15 segue Pendente e não foi iniciada**; escolha da próxima frente
+> **não** foi feita nesta rodada.
 
 Em 2026-10-02, por reconciliação documental autorizada, diferenciou-se ESTADO HISTÓRICO (documentos antigos, inalterados, refletindo bloqueios das respectivas datas) de ESTADO RECONCILIADO (2026-10-02): R-01, R-02, R-03/P19 e R-05 encontram-se RESOLVIDOS posteriormente; R-04 encontra-se SUPERADO pelas validações/testes posteriores. As divergências documentais registradas em §5 não foram alteradas. Os handoffs históricos permanecem inalterados.
 

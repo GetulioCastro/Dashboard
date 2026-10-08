@@ -668,7 +668,7 @@ Implementar a consulta de Despesas conforme o contrato de dados (T-03) e a compo
 
 #### T-14 — Implementar cards dos indicadores assistenciais (Atendimentos, Consultas, Exames)
 
-- **Status:** Pendente
+- **Status:** Concluído (fechamento documental 2026-10-08; entrega e validação em 2026-10-07)
 - **Complexidade:** Baixa
 - **Depende de:** T-06, T-08, T-09, T-10
 - **Implementa:** —
@@ -693,6 +693,94 @@ Criar o partial `_IndicatorCard` reutilizável e renderizar os cards de Atendime
 
 **Riscos / pontos de atenção:**
 - Nenhum risco crítico — tarefa de composição visual simples
+
+**Registro de execução (fechamento documental 2026-10-08; entrega validada em 2026-10-07):**
+
+Fatos comprovados:
+
+- Home integrada aos indicadores reais: **Atendimentos**, **Consultas** e **Exames**;
+- os demais indicadores da Home permanecem **demonstrativos** (modo híbrido);
+- período da Home integrado aos 3 cards reais (o filtro de período atualiza os três);
+- atualização dos dados reais ocorre por **handler Razor Pages dedicado**;
+- dados reais **não utilizam** fallback demonstrativo;
+- valor **zero real** é distinguível de **indicador indisponível** (estados real / zero / indisponível tratados);
+- mini-gráficos demonstrativos **neutralizados** nos 3 cards reais;
+- navegação Home → detalhe **preserva o período** em Atendimentos, Consultas e Exames;
+- correção de aliases `DataInicial`/`DataFinal` aplicada em **Consultas** e **Exames**;
+- textos da Home atualizados para refletir corretamente o estado híbrido;
+- validação runtime humana concluída;
+- build Release **0 erros / 0 avisos**;
+- testes **72/72** aprovados.
+
+Commits técnicos:
+
+- `a1159c1` — cards reais na Home (T-14)
+- `61ca098` — correção de período em Consultas/Exames
+- `100ba8f` — textos de coerência visual da Home (estado híbrido)
+- `64c93af` — extensão: mini-gráficos reais nos cards e no modal Maximizar
+
+**Decisão humana sobre `_IndicatorCard.cshtml` (08/10/2026) — DISPENSADO:**
+
+> A criação do partial `_IndicatorCard.cshtml` foi dispensada.
+> A implementação reutilizou o loop e a estrutura de cards já existentes
+> em `Index.cshtml`, sem necessidade de nova abstração.
+
+O partial **não foi criado e não será criado retroativamente**. O artefato continua
+**não entregue literalmente** (o critério correspondente permanece desmarcado), mas a ausência
+**não é bloqueador** e **não impugna a conclusão da T-14**. Registro de inspeção que motivou a
+decisão (2026-10-08): `Dashboard.Web/Shared/_IndicatorCard.cshtml` não existe no repositório e
+nenhuma página declara `<partial>` de card.
+
+**Extensão final da T-14 — mini-gráficos reais (2026-10-08, commit `64c93af`):**
+
+Fatos comprovados:
+
+- Atendimentos, Consultas e Exames exibem **valor real + mini-gráfico real + período real**;
+- dados demonstrativos **não participam** dos 3 cards reais (nem valor, nem gráfico, nem cor);
+- a Home passou a consultar com **`DimensaoVisao.Nenhuma`**, obtendo a evolução temporal
+  consolidada em 1 série;
+- os pontos reais vêm de `IndicadorVisao.Series` → `SerieGrafico.Pontos`
+  (`PontoGrafico.Data`/`Valor`), expostos no contrato JSON como `pontos: [{ data, valor }]`;
+- a cor do gráfico real vem da **`SerieGrafico` real** (`cor`), sem depender dos dados
+  demonstrativos;
+- o **mesmo conjunto de pontos** em memória é reutilizado no **modal Maximizar**, sem novo
+  fetch;
+- período com **valor real zero**: valor = `0` e gráfico = *"Sem movimento no período."*
+  (zero **não** é tratado como indisponibilidade);
+- **indicador indisponível** (falha de banco/repositório): valor = `—`, caption =
+  *"Indisponível"*, gráfico = *"Gráfico indisponível."*;
+- o handler `OnGetIndicadoresReaisAsync` continua sendo a **fonte única** dos 3 cards reais;
+- atualização da Home otimizada de **12 queries → 3 queries** por atualização
+  (1 por indicador; antes 4 × 3 por `DimensaoVisao.Convenio`);
+- **nenhum SQL novo, nenhum repository novo, nenhuma service layer nova, nenhuma biblioteca
+  gráfica nova**;
+- arquivos alterados: apenas `Dashboard.Web/Pages/Index.cshtml.cs` e
+  `Dashboard.Web/wwwroot/js/dashboard.js`.
+
+**Validação humana final (runtime, 2026-10-08):**
+
+- Home com mini-gráficos reais nos 3 cards;
+- mudança de período atualiza valor e gráfico **em conjunto**;
+- estado **zero real** observado em Exames (*"Sem movimento no período."*);
+- modal Maximizar exibindo o gráfico real, sem novo fetch;
+- navegação Home → detalhe preservando o período;
+- build Release **0 erros / 0 avisos**;
+- testes **72/72** aprovados.
+
+**Risco registrado, sem tratamento nesta tarefa:** o período **não possui teto máximo** —
+intervalos muito longos geram linhas/payload proporcionais ao intervalo; decisão futura.
+
+**Divergência registrada (histórico, preservada):** o escopo previsto acima cita o
+partial `_IndicatorCard` como artefato novo da tarefa; inspeção do repositório em 2026-10-08
+**não encontrou** `Dashboard.Web/Shared/_IndicatorCard.cshtml` nem qualquer `<partial>` de card
+nas páginas. Resolvida pela **decisão humana de dispensa** acima (2026-10-08), não por
+entrega.
+
+**Critérios de aceite:**
+- [x] Cards dos três assistenciais exibem a quantidade do período selecionado (CA-03, CA-11, CA-12) — validado em runtime (2026-10-07); valor + mini-gráfico real + período (2026-10-08)
+- [ ] Partial `_IndicatorCard` é reutilizável (título, valor, período, unidade) — **DISPENSADO por decisão humana (08/10/2026)**; estrutura de cards reutilizada em `Index.cshtml`; não entregue, não bloqueante
+- [ ] Cards exibem a categoria de cobertura selecionada (RN-26) — sem registro de validação neste fechamento
+- [x] Cards comportam estado vazio (CA-09) e erro (CA-10) — estados real / zero / indisponível tratados e validados em runtime (2026-10-07 e 2026-10-08)
 
 ---
 
@@ -1019,7 +1107,7 @@ Checkbox de resolução (marcar à medida que forem respondidas):
 | T-11   | Pendente | — | — | — |
 | T-12   | Pendente | — | — | — |
 | T-13   | Pendente | — | — | — |
-| T-14   | Pendente | — | — | — |
+| T-14   | Concluído | 2026-10-07 | `a1159c1`, `61ca098`, `100ba8f`, `64c93af` | Home em modo híbrido: Atendimentos, Consultas e Exames com dados **reais**; demais indicadores permanecem demonstrativos; período da Home integrado aos 3 cards reais via handler Razor Pages dedicado; sem fallback demonstrativo nos dados reais; zero real distinguido de indisponível; mini-gráficos demonstrativos neutralizados nos cards reais; navegação Home → detalhe preserva o período nos 3 indicadores; aliases `DataInicial`/`DataFinal` corrigidos em Consultas e Exames; textos da Home ajustados ao estado híbrido; validação runtime humana 2026-10-07. **Extensão 2026-10-08 (`64c93af`):** mini-gráficos **reais** nos 3 cards e no modal Maximizar (mesmos pontos, sem novo fetch), cor vinda da `SerieGrafico` real, `DimensaoVisao.Nenhuma` na Home (12 → **3 queries**/atualização), estados zero (*"Sem movimento no período."*) e indisponível (*"Gráfico indisponível."*), nenhum dado demonstrativo nos cards reais, sem SQL/repository/service/biblioteca nova; validação humana final 2026-10-08; build Release 0 erros/0 avisos; testes 72/72; **`_IndicatorCard.cshtml` DISPENSADO por decisão humana (08/10/2026)** — não entregue, não bloqueante; fechamento documental 2026-10-08 |
 | T-15   | Pendente | — | — | — |
 | T-16   | Pendente | — | — | — |
 | T-17   | Pendente | — | — | — |
