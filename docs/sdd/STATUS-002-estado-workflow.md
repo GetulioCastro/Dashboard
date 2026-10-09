@@ -22,7 +22,7 @@
 | Arquitetura | `docs/architecture/proposta-arquitetural.md` + ADR-007..010 | Aprovada |
 | Requisitos | PRD-001 (Epic) / PRD-002 (Atendimentos) | Rascunho — revisão 2 |
 | Especificação | SPEC-UI-001, SPEC-VIS-001 | Aguardando validação humana |
-| Plano | PLAN-001 (T-01..T-21) | Execução em andamento — **T-14 CONCLUÍDA** (entrega 2026-10-07, extensão de mini-gráficos reais 2026-10-08, fechamento documental 2026-10-08; §3.3 e §3.3.1) |
+| Plano | PLAN-001 (T-01..T-21) | Execução em andamento — **T-14 CONCLUÍDA** (entrega 2026-10-07, extensão de mini-gráficos reais 2026-10-08, fechamento documental 2026-10-08; §3.3 e §3.3.1); **T-11 com diagnóstico pré-implementação concluído** (2026-10-08; §3.4) |
 | Plano | PLAN-002 (T-01..T-08) — Análise por Convênio | **ENCERRADO (2026-10-06)** — T-01..T-08 concluídas, build 0/0, 72/72 testes, P19 reconciliado, UI integrada, **gate humano visual aprovado (2026-10-06)**; sem pendência funcional aberta; evolução gráfica não iniciada *(afirmação correta em 2026-10-06; a evolução gráfica foi executada depois, em 2026-10-07 — ver linha seguinte)* |
 | Plano | PLAN-003 (P3-T01..P3-T05) — Visualização Gráfica por Convênio | **ENCERRADO (2026-10-07)** — registro retroativo; gráfico horizontal SVG em Atendimentos, Consultas e Exames; responsividade validada (DevTools mobile); build 0/0, 72/72 testes, validações humanas concluídas; commits `0038c54`, `6619782`, `2c62fae`, `e9a3917` |
 | Revisão | REVIEW-T-08-2026-09-18 | Aprovado com ressalvas |
@@ -35,7 +35,8 @@
 | T-01..T-07 | Concluído | — |
 | **T-08** | **Implementado e Validado (reconciliado 2026-10-02)** | Integrados CA-03/CA-09/CA-18 (estado reconciliado 2026-10-02) |
 | **T-09, T-10** | **Concluído (reconciliado 2026-10-07)** | Entregas já existentes no código (`ConsultasVisaoRepository`/`ExamesVisaoRepository`, commits `9ab8f9c`/`f43aac0`) — PLAN-001 atualizado por reconciliação documental, sem reescrita de histórico; CA-09 com lacuna de validação declarada |
-| T-11..T-13, T-19 | Pendente | Elegíveis por dependência — ver §6, tensão objeto de reconciliação documental em 2026-10-02 |
+| **T-11** | **Pendente — diagnóstico concluído (2026-10-08)** | Executar queries read-only Q1–Q6 pós-demo (após 15h de 08/10) e obter 2 gates humanas (equivalência "guia emitida" ≡ `('F','E')`; coluna da data de emissão) — ver §3.4 e PLAN-001 T-11 |
+| T-12, T-13, T-19 | Pendente | Elegíveis por dependência — ver §6, tensão objeto de reconciliação documental em 2026-10-02 |
 | **T-14** | **Concluído** (entrega e validação 2026-10-07; extensão de mini-gráficos reais 2026-10-08; fechamento documental 2026-10-08) | — (registros em §3.3 e §3.3.1) |
 | T-15..T-18, T-20, T-21 | Pendente | Bloqueadas |
 
@@ -188,6 +189,70 @@ muito longos geram linhas/payload proporcionais; decisão futura.
 "próxima frente técnica (pendente de execução; não iniciada)" **refletia o estado daquela data**
 e permanece preservada. A T-14 foi executada e validada no mesmo ciclo, em 2026-10-07, e
 fechada documentalmente em 2026-10-08. **T-15 permanece Pendente** e não foi iniciada.
+
+### 3.4 — PLAN-001 / T-11 — diagnóstico pré-implementação (aditivo, 2026-10-08)
+
+Registro aditivo do **diagnóstico funcional/técnico da T-11 (Faturamento)**, feito sem código e
+sem tocar o baseline da demo (Home e cards reais intactos). O detalhamento completo — regras
+fechadas, evidências físicas, pendências P20–P26, tabela das queries Q1–Q7, gates humanas e
+esboços de `FaturamentoDto`/`IFaturamentoRepository`/`FaturamentoRepository` — está no bloco
+**"Diagnóstico pré-implementação"** da tarefa T-11 em `docs/plans/PLAN-001-dashboard-indicadores.md`.
+
+**Estado registrado:**
+
+- **Regras funcionais fechadas:** faturado = `SUM(ENTRADA.Total)` com `FECHADO IN ('F','E')`
+  (RN-10/RN-12, evidência **R** no dicionário §13.3); a faturar = convênio + alta + faturamento
+  incompleto (RN-31/RN-33, T-02); período = data de emissão da guia (RN-13) + comparação com
+  período anterior (RN-32); convênio cadastrado (RN-11); estados `A/P/F/E/C` (`E`=**Enviada**);
+  formatação `R$` (RN-05) na Web;
+- **Evidências físicas (E) suficientes** no contrato T-03 §8 para `ENTRADA`, `FATURA`,
+  `BI_Faturamento` e `CADCONVENIO`; `RECEBER` descartado como base por RN-12;
+- **Pendências físicas restantes:** P20–P25 (contrato T-03 §8.5) + P26 (decisão documental);
+- **Próximo passo:** executar as **queries read-only Q1–Q6 pós-demo** (sqlcmd + conn string já
+  disponíveis; nada executado nesta rodada) e obter **2 gates humanas** — (1) equivalência
+  *"guia emitida" ≡ `FECHADO IN ('F','E')`* (classificada **U**, dicionário §13.12), (2) coluna
+  da data de emissão (P22, orientada pela Q3);
+- com isso, T-11 segue para implementação **sem nova decisão de negócio**; T-12 (Q3/profissional),
+  T-13 (Q5/composição) e T-15 (toca `Index.cshtml` — baseline) **não foram iniciadas**.
+
+**Nesta rodada:** nenhum arquivo de código alterado, nenhum SQL executado, nenhum build/test,
+nenhuma DI/UI alterada, nenhum servidor iniciado; Git apenas com commits de documentação.
+
+### 3.4.1 — PLAN-001 / T-11 — fechamento das regras de faturamento (aditivo, 2026-10-09)
+
+Registro **aditivo** (preserva §3.4 acima). A **decisão humana, validada pelo DBA da empresa em
+2026-10-09**, fechou as regras de estado do faturamento:
+
+- `FECHADO = 'F'` = conta **faturada e ainda NÃO enviada**;
+- `FECHADO = 'E'` = conta **faturada e enviada**;
+- `FECHADO = 'P'` = parcial, ainda não cobrada;
+- `FECHADO = 'X'` = ignorada;
+- **Faturamento do Dashboard = estados `F` + `E`**;
+- **Data de referência oficial = `ENTRADA.DataHoraEnt`** (resolve P22).
+
+**"A Faturar" permanece pendente de definição funcional. Nenhuma regra deve ser inferida a partir
+dos estados `FECHADO`** — não associar automaticamente `P`, `F`, `P+F` nem qualquer outro conjunto.
+
+**Correção da hipótese antiga:** a hipótese *"guia emitida" ≡ `FECHADO IN ('F','E')`* (gate 1 de
+§3.4, classificada **U**, dicionário §13.12) fica **substituída** pela regra validada acima —
+`F` = faturada não enviada, `E` = faturada enviada, **faturamento total = `F` + `E`**. A hipótese
+anterior permanece **apenas como histórico** e **não se aplica mais**. **"A Faturar" NÃO é marcado
+como resolvido.**
+
+**Evidências técnicas confirmadas (2026-10-08/09, somente leitura — CASAMATER):** fonte física no
+`CASAMATER`; núcleo `ENTRADA + CADMEDICO + CADCONVENIO + FATURA` validado (`SELECT` efetivo de
+`dashboard_readonly` nos 4 objetos, `HAS_PERMS_BY_NAME = 1`); `SELECT TOP (0)` compilou com **exit
+code 0**; expressão `(F.Valor + F.CustoOP + F.Filme) * F.Quant`; join `FATURA F ON F.CodPaciente =
+E.CodMovimento`; agregado jan/2026: `E` = 64.875 itens / 6.822 atendimentos / R$ 9.095.334,40 ·
+`F` = 33 / 33 / R$ 2.528,00 · `P` = 541 / 7 / R$ 46.940,50 · `X` ausente no recorte. A evidência
+**não altera** a regra humana.
+
+**Consequência:** T-11 fica implementável para o **faturamento total = `F` + `E`**; **"A Faturar"
+continua bloqueado** por falta de definição funcional. Nenhum código/SQL/build/DI nesta rodada
+documental.
+
+**Nesta rodada:** somente os 2 documentos alterados (`PLAN-001` e este `STATUS-002`); nenhum SQL,
+build, código, Home ou DI; nenhum `git add/commit/push`.
 
 ## 4. R-05 — pendência aberta (bloqueio externo)
 

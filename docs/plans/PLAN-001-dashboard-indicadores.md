@@ -593,6 +593,69 @@ Implementar a consulta de Faturamento conforme o contrato de dados (T-03): soma 
 - **Bloqueado até T-02/T-03** — estados de faturamento (Q4) e definição de "emissão" são requisitos de T-02
 - Valores monetários — conferir tipo decimal no contrato
 
+**Diagnóstico pré-implementação (2026-10-08 — somente leitura, sem código):**
+
+*Regras fechadas (com evidência):*
+
+| Item | Regra | Fonte |
+|---|---|---|
+| Faturado | `SUM(ENTRADA.Total)` com `FECHADO IN ('F','E')`, referência `DATAHORAENT` | RN-10/RN-12; dicionário §13.3 (**R**); contrato §8.3 |
+| A faturar | Convênio + alta + faturamento incompleto (hipótese física: `ALTA IS NOT NULL AND FECHADO IN ('A','P')`) | RN-31/RN-33 (T-02, §13.13); contrato §8.4 |
+| Período | Data de emissão da guia (RN-13); comparação com período anterior obrigatória (RN-32); filtro uniforme (RN-42) | PRD-001; `PeriodoResolutor` |
+| Convênio | Convênio cadastrado no SisacHTML5 (RN-11); `CADCONVENIO` 603 chaves, `MODOFAT` C/P/S (RN-26) | PLAN-002 T-03 |
+| Estados | `A`=Aberto, `P`=Parcial, `F`=Fechado, `E`=**Enviada**, `C`=Cancelado (`E` ≠ "Emitido" — §13.1) | dicionário §13.1 (**R**) |
+| Formatação | `R$ X.XXX,XX` (RN-05) e percentuais 1 casa (RN-06) — camada Web | PRD-001 |
+
+*Evidências físicas (**E** no contrato T-03 §8):* `ENTRADA` (`TOTAL`, `FECHADO`, `DATAHORAENT`, `DATAFECH`, `ALTA`, `CODCONVENIO varchar(10)`, `LoteEnt`); `FATURA` 8,2M (`DATA`, `VALOR`, `VTOTAL`, `QUANT`, `GRUPO`, `CODCONVENIO varchar(3)`, `CHAVE`); `BI_Faturamento` 7,5M (`ValorTotal`, `DataFatura`, `Fechamento`); `RECEBER` **não** é base (RN-12).
+
+*Pendências físicas (contrato T-03 §8.5):* **P20** semântica de `FECHADO` no SisacHTML5 · **P21** existência/estrutura de `FATURA` · **P22** coluna da data de emissão · **P23** representação da alta · **P24** fluxo completo · **P25** tabela de envio/auditoria · **P26** relevância de `RECEBER` (RN-12 sugere não — decisão documental, sem query).
+
+*Queries read-only mínimas (executar pós-demo; uma a uma):*
+
+| # | Objetivo | Tabela / colunas | Filtro mínimo | Esperado | Decide |
+|---|---|---|---|---|---|
+| Q1 | Distribuição dos estados | `ENTRADA`: `FECHADO, COUNT(1), SUM(TOTAL)` | nenhum + janela 2024 (`DATAHORAENT`) | E=1.602.045 / A=181.246 / F=45.873 / C=42.624 / P=40.883 | P20 |
+| Q2 | Estrutura das fontes itemizadas | `INFORMATION_SCHEMA.COLUMNS` de `FATURA`, `BI_Faturamento` | `TABLE_NAME IN (...)` | `DATA, VALOR, VTOTAL, QUANT, GRUPO, CODCONVENIO, CHAVE` | P21 e fonte do valor |
+| Q3 | Data de emissão | `ENTRADA` × `FATURA` (via `CHAVE`): `%` de coincidência dia a dia de `DATAHORAENT` vs `FATURA.DATA` | janela 2024 | taxa de coincidência | P22 (orienta; decisão humana) |
+| Q4 | Conta a faturar | `ENTRADA` (+ `CADCONVENIO`): `FECHADO × ALTA IS NOT NULL`, `COUNT(1), SUM(TOTAL)` | janela 2024, `MODOFAT='C'` | massa por estado | P23/P24 e fórmula RN-31 |
+| Q5 | Integridade do convênio | `FATURA` LEFT JOIN `CADCONVENIO`: `%` casamento, `MODOFAT` | janela 2024 | casamento ≈100% | filtro RN-11 |
+| Q6 | `LoteEnt='INAT'` no faturamento | `ENTRADA`: `LoteEnt, COUNT(1), SUM(TOTAL)` | `FECHADO IN ('F','E')`, janela 2024 | massa INAT vs não-INAT | aplicar ou não `LoteEnt <> 'INAT'` |
+| Q7 | Desempenho/janela (opcional) | `ENTRADA`: `YEAR(DATAHORAENT), COUNT(1)` | nenhum | volume por ano | limites de período |
+
+*Gates humanas (não se resolvem com SQL):*
+1. **Equivalência "guia emitida" (RN-12) ≡ `FECHADO IN ('F','E')`** — classificada **U** (dicionário §13.12) — decisão do responsável pelo PRD.
+2. **Escolha da coluna da data de emissão (P22)** — Q3 orienta, decisão humana.
+
+*Esboços aprovados como direção (não criados):* `Dashboard.Core/DTOs/FaturamentoDto.cs` (`TotalFaturado`, `TotalAFaturar`, `FaturadoPeriodoAnterior`, `AFaturarPeriodoAnterior`, `Periodo`, `PeriodoAnterior` reutilizando `BusinessReferencePeriod`, `Unidade="R$"` — formatação RN-05 fica na Web) e `Dashboard.Core/Contratos/IFaturamentoRepository.cs` (`ObterFaturamentoAsync(IndicatorFilter, CancellationToken)` — **contrato novo**: `IndicatorData` tem um único `Value` e não comporta faturado/a faturar/periodo anterior). `Dashboard.Data/Repositories/FaturamentoRepository.cs`: `sealed`, `ISqlConnectionFactory` (padrão T-05), período anterior calculado em Core, 1 `SELECT` parametrizado com `SUM(CASE ...)`, cancelados excluídos, sem escrita (ADR-003/008), **sem DI** até gate da T-15.
+
+*Testes previstos (já declarados acima):* `CA_04_faturamento_total_no_periodo_retorna_valor_somado` e `CA_14_faturamento_distingue_faturadas_e_a_faturar_e_compara_periodos` (integração); formatação RN-05 fica para T-19/Web. Derivados sugeridos: período sem dados → `0` (coerência CA-09); `FECHADO='C'` e (se Q6 confirmar) `LoteEnt='INAT'` nunca somados.
+
+*Próximo passo:* executar Q1–Q6 pós-demo (após 15h de 08/10) → obter as 2 gates humanas → implementação sem nova decisão de negócio pendente. **Nesta rodada: nenhum arquivo de código alterado, nenhum SQL executado, nenhuma DI/UI alterada; Home e os 3 cards reais intactos.**
+
+**Fechamento das regras de faturamento (aditivo, 2026-10-09 — somente leitura, sem código):**
+
+> **Gate humana (decisão validada pelo DBA da empresa, 2026-10-09):**
+> - `FECHADO = 'F'` = conta **faturada e ainda NÃO enviada**;
+> - `FECHADO = 'E'` = conta **faturada e enviada**;
+> - `FECHADO = 'P'` = parcial, ainda não cobrada;
+> - `FECHADO = 'X'` = ignorada;
+> - **Faturamento do Dashboard = estados `F` + `E`**;
+> - **Data de referência oficial = `ENTRADA.DataHoraEnt`** (resolve P22).
+>
+> **"A Faturar" permanece pendente de definição funcional. Nenhuma regra deve ser inferida a partir dos estados `FECHADO`.** Não associar automaticamente `P`, `F`, `P+F` nem qualquer outro conjunto a "A Faturar".
+
+*Correção da hipótese antiga:* a hipótese **"guia emitida" ≡ `FECHADO IN ('F','E')`** (gate 1 acima, classificada **U** em dicionário §13.12) fica **substituída** pela regra validada — `F` = faturada não enviada, `E` = faturada enviada, **faturamento total = `F` + `E`**. A hipótese anterior fica **preservada apenas como histórico** e **não se aplica mais**. **"A Faturar" NÃO é marcado como resolvido.**
+
+*Evidências técnicas confirmadas (2026-10-08/09, somente leitura — CASAMATER):*
+- fonte física no `CASAMATER`; núcleo validado `ENTRADA + CADMEDICO + CADCONVENIO + FATURA`;
+- `dashboard_readonly` possui `SELECT` efetivo nesses 4 objetos (`HAS_PERMS_BY_NAME = 1`); `SELECT TOP (0)` compilou com **exit code 0**;
+- expressão de faturamento fornecida pelo responsável: `(F.Valor + F.CustoOP + F.Filme) * F.Quant`;
+- join físico confirmado: `FATURA F ON F.CodPaciente = E.CodMovimento`;
+- agregado jan/2026 (`E.DataHoraEnt ∈ [2026-01-01; 2026-02-01)`): `E` = 64.875 itens / 6.822 atendimentos / R$ 9.095.334,40 · `F` = 33 / 33 / R$ 2.528,00 · `P` = 541 / 7 / R$ 46.940,50 · `X` **não apareceu** no recorte;
+- essa evidência **não altera** a regra humana acima.
+
+*Status:* regra de **faturamento total = `F` + `E`** fechada; **"A Faturar" ainda pendente de definição funcional** — T-11 fica implementável para o **total faturado (F+E)**, mas **não** para "A Faturar". Nenhum código, SQL, build, DI ou UI nesta rodada documental.
+
 ---
 
 #### T-12 — Implementar query de Produção Médica em Dashboard.Data
@@ -1104,7 +1167,7 @@ Checkbox de resolução (marcar à medida que forem respondidas):
 | T-08   | Implementado (validação pendente) | 2026-09-18 | — | Investigação técnica T-08 commitada (`5e340cf`); implementação: `AtendimentosRepository` (`ENTRADA`, contagem RN-07 com `COALESCE(LoteEnt,'') <> 'INAT'`, `DATAHORAENT` RN-09, tipo `TIPO` 1–6 + "Não classificado" RN-08, cobertura `CADCONVENIO.MODOFAT` C/P/S RN-26), `PeriodoResolutor` em Core (RN-04/RN-42) e 3 testes de integração `CA_03`/`CA_18`/`ca09`; build 0 avisos/0 erros; testes falham apenas por lacuna de credencial `ConnectionStrings__SisacDatabase` (nenhum resultado inventado); `AtendimentosDto` não criado (forma = contagem única, coberta por `IndicatorData`) |
 | T-09   | Concluído | 2026-10-07 | `9ab8f9c` | Reconciliação documental: entrega já existia no código — `ConsultasVisaoRepository.cs` (RN-28 tipo 1 sem retorno, RN-26 cobertura), DI `Program.cs:18`, página `Consultas` em uso; testes `CA_11`/`CA_18` na suíte 72/72; CA-09 com lacuna de validação declarada (ver registro da tarefa) |
 | T-10   | Concluído | 2026-10-07 | `f43aac0` | Reconciliação documental: entrega já existia no código — `ExamesVisaoRepository.cs` (RN-29 tipo 3, RN-26 cobertura), DI `Program.cs:22`, página `Exames` em uso; testes `CA_12`/`CA_18` na suíte 72/72; CA-09 com lacuna de validação declarada (ver registro da tarefa) |
-| T-11   | Pendente | — | — | — |
+| T-11   | Pendente (diagnóstico + regras fechadas) | — | — | Diagnóstico pré-implementação concluído 2026-10-08 (somente leitura): regras fechadas, evidências físicas (E), pendências P20–P26, queries Q1–Q7 e 2 gates humanas registradas no bloco da tarefa. **Aditivo 2026-10-09:** regras de estado fechadas por decisão humana validada pelo DBA — `F`=faturada não enviada, `E`=faturada enviada, `P`=parcial não cobrada, `X`=ignorada; **faturamento do Dashboard = `F`+`E`**; **data de referência = `ENTRADA.DataHoraEnt`**; núcleo físico `ENTRADA+CADMEDICO+CADCONVENIO+FATURA` validado com `SELECT` efetivo e `TOP (0)` compilado (exit 0). **"A Faturar" permanece pendente** (não inferir dos estados). Nenhum código alterado |
 | T-12   | Pendente | — | — | — |
 | T-13   | Pendente | — | — | — |
 | T-14   | Concluído | 2026-10-07 | `a1159c1`, `61ca098`, `100ba8f`, `64c93af` | Home em modo híbrido: Atendimentos, Consultas e Exames com dados **reais**; demais indicadores permanecem demonstrativos; período da Home integrado aos 3 cards reais via handler Razor Pages dedicado; sem fallback demonstrativo nos dados reais; zero real distinguido de indisponível; mini-gráficos demonstrativos neutralizados nos cards reais; navegação Home → detalhe preserva o período nos 3 indicadores; aliases `DataInicial`/`DataFinal` corrigidos em Consultas e Exames; textos da Home ajustados ao estado híbrido; validação runtime humana 2026-10-07. **Extensão 2026-10-08 (`64c93af`):** mini-gráficos **reais** nos 3 cards e no modal Maximizar (mesmos pontos, sem novo fetch), cor vinda da `SerieGrafico` real, `DimensaoVisao.Nenhuma` na Home (12 → **3 queries**/atualização), estados zero (*"Sem movimento no período."*) e indisponível (*"Gráfico indisponível."*), nenhum dado demonstrativo nos cards reais, sem SQL/repository/service/biblioteca nova; validação humana final 2026-10-08; build Release 0 erros/0 avisos; testes 72/72; **`_IndicatorCard.cshtml` DISPENSADO por decisão humana (08/10/2026)** — não entregue, não bloqueante; fechamento documental 2026-10-08 |
