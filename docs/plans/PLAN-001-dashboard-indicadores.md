@@ -564,7 +564,7 @@ Implementar a consulta de Exames conforme o contrato de dados (T-03), contando o
 
 #### T-11 — Implementar query de Faturamento em Dashboard.Data
 
-- **Status:** Pendente
+- **Status:** Parcialmente concluída (2026-10-09) — **T-11A (faturamento realizado = `FECHADO IN ('F','E')`) implementada, validada e commitada** (`6061aba`); **"A Faturar" permanece pendente de definição funcional** (ver "T-11A — implementação do faturamento realizado" abaixo)
 - **Complexidade:** Média
 - **Depende de:** T-05, T-07
 - **Implementa:** RN-10, RN-11, RN-12, RN-13, RN-31, RN-32, RN-33
@@ -578,16 +578,20 @@ Implementar a consulta de Exames conforme o contrato de dados (T-03), contando o
 Implementar a consulta de Faturamento conforme o contrato de dados (T-03): soma dos valores das guias/contas do período (RN-12), distinguindo **contas faturadas** e **contas a faturar** (RN-31) e permitindo comparação com o período anterior (RN-32), filtro por convênio cadastrado (RN-11), data de emissão da guia como referência (RN-13). Estados e "emissão" seguem o modelo do novo banco (RN-33) — regras em Core. **Nada presumido (inclusive os estados).**
 
 **Critério de aceite (testável):**
-- [ ] Query retorna soma dos valores faturados no período (RN-10)
-- [ ] Filtro por convênio funciona (RN-11)
-- [ ] Base de cálculo é guia/conta de atendimento, não recebimento (RN-12)
-- [ ] Data de referência é a de emissão da guia (RN-13)
-- [ ] Distingue contas faturadas e a faturar (RN-31)
-- [ ] Compara período anterior × atual (RN-32)
+- [x] Query retorna soma dos valores faturados no período (RN-10) — *entregue em T-11A (2026-10-09): faturamento realizado = `FECHADO IN ('F','E')`*
+- [ ] Filtro por convênio funciona (RN-11) — *não coberto por T-11A*
+- [x] Base de cálculo é guia/conta de atendimento, não recebimento (RN-12) — *entregue em T-11A (`ENTRADA` + `FATURA`; `RECEBER` não é base)*
+- [x] Data de referência é a de emissão da guia (RN-13) — *resolvida por decisão humana (2026-10-09): `ENTRADA.DataHoraEnt` (resolve P22)*
+- [ ] Distingue contas faturadas e a faturar (RN-31) — *pendente: "A Faturar" sem definição funcional*
+- [ ] Compara período anterior × atual (RN-32) — *não coberto por T-11A*
 
 **Testes a escrever:**
 - *Integration:* `CA_04_faturamento_total_no_periodo_retorna_valor_somado`
 - *Integration:* `CA_14_faturamento_distingue_faturadas_e_a_faturar_e_compara_periodos`
+
+> **Nota de execução (T-11A, 2026-10-09):** os testes materializados adotaram nomes `CA_04_*`
+> (ver bloco "T-11A — implementação do faturamento realizado"). O `CA_14` continua **não escrito**,
+> por depender da distinção "A Faturar" ainda pendente.
 
 **Riscos / pontos de atenção:**
 - **Bloqueado até T-02/T-03** — estados de faturamento (Q4) e definição de "emissão" são requisitos de T-02
@@ -655,6 +659,79 @@ Implementar a consulta de Faturamento conforme o contrato de dados (T-03): soma 
 - essa evidência **não altera** a regra humana acima.
 
 *Status:* regra de **faturamento total = `F` + `E`** fechada; **"A Faturar" ainda pendente de definição funcional** — T-11 fica implementável para o **total faturado (F+E)**, mas **não** para "A Faturar". Nenhum código, SQL, build, DI ou UI nesta rodada documental.
+
+**T-11A — implementação do faturamento realizado (aditivo, 2026-10-09):**
+
+Registro **aditivo** (preserva os blocos de diagnóstico e de fechamento de regras acima). A
+**T-11A** implementou **exclusivamente** `FATURAMENTO REALIZADO = FECHADO IN ('F','E')` e foi
+**validada, commitada e enviada** ao repositório.
+
+*Escopo entregue:*
+
+- `Dashboard.Core/DTOs/FaturamentoDto.cs` — DTO mínimo: `DataInicial`, `DataFinal`, `ValorFaturado` (decimal);
+- `Dashboard.Data/Repositories/FaturamentoRepository.cs` — `sealed`; SQL **constante** (`internal const string Sql`) parametrizado (`DynamicParameters`); período semiaberto `[DataInicial; DataFinal+1)` com `ArgumentOutOfRangeException.ThrowIfGreaterThan` para datas invertidas; `SUM((F.Valor + F.CustoOP + F.Filme) * F.Quant)`; `SUM` NULL tratado no C# como `0` (`total ?? 0m`); **sem** `COALESCE` por linha no SQL; **sem** concatenação de SQL; **sem** integração com Home; **sem** registro em DI; **sem** endpoint/página nova;
+- `Dashboard.Data.Tests/Repositories/FaturamentoRepositoryTests.cs` — 5 testes (3 unitários de SQL + 2 de integração).
+
+*Fonte física confirmada (somente leitura):* banco **CASAMATER**; núcleo físico **`ENTRADA`,
+`CADMEDICO`, `CADCONVENIO`, `FATURA`**; join `FATURA F ON F.CodPaciente = E.CodMovimento`. Filtros
+da regra de faturamento implementados no SQL:
+
+| Filtro | Valor |
+|---|---|
+| `E.Tipo` | `IN ('1','3','4','5','6','7')` |
+| `E.Fechado` | `IN ('F','E')` |
+| `E.LoteEnt` | `<> 'INAT'` |
+| `E.Restrito` | `<> 'Z'` |
+| `E.GrupoEmp` / `E.Filial` | `= '01'` / `= '01'` |
+| `C.ModoFat` | `IS NOT NULL` |
+| `E.Guia` | `<> 'GUIA MEDICO'` e `<> 'LENTEC'` |
+| `M.REDUZIDO` | `IS NOT NULL` |
+| Período | `E.DataHoraEnt >= @DataInicial` e `E.DataHoraEnt < @DataFinalExclusiva` |
+
+*Regras F/E/P/X (decisão humana validada pelo DBA, 2026-10-09):* `F` = conta **faturada e ainda NÃO
+enviada**; `E` = conta **faturada e enviada**; `P` = **parcial, ainda não cobrada**; `X` =
+**ignorada**. Faturamento realizado do Dashboard = `F` + `E`. Data de referência oficial =
+`ENTRADA.DataHoraEnt`.
+
+*Permissões (evidência operacional):* `dashboard_readonly` **já possuía** `SELECT` em `ENTRADA` e
+`CADCONVENIO`; foi **autorizado e concedido** `SELECT` em **`CADMEDICO`** e **`FATURA`**. Nenhum
+outro acesso concedido. A sub-slice **não depende** de `CADPACIENTE`, `FECHAMENTO` nem `LOCAL`.
+
+*Validação da fórmula (jan/2026, estados `F`+`E`):* linhas pós-join = **64.908**; NULLs simultâneos
+em `F.Valor`, `F.CustoOP`, `F.Filme` e `F.Quant` = **5 linhas**; fórmula **literal** do DBA =
+**R$ 9.097.862,40**; fórmula **diagnóstica** com `COALESCE` = **R$ 9.097.862,40**; diferença
+**R$ 0,00** → decisão: implementar a fórmula **literal** (o `COALESCE` **não** foi promovido a regra).
+
+*Não fazer / fora do escopo:* `Dashboard.Web`, Home, DI, endpoint, página, Card, gráfico, e
+qualquer consulta de "A Faturar" — **não tocados**.
+
+*Validação técnica final:*
+
+- build **Release**: **0 erros / 0 avisos**;
+- `Dashboard.Core.Tests`: **9/9** aprovados; `Dashboard.Data.Tests`: **68/68** aprovados;
+- **total: 77/77 aprovados, 0 falhas**.
+
+*Incidente 18456 (registrado de forma objetiva):* durante a validação inicial, **25 testes de
+integração** falharam com **SQL Server erro 18456** para `dashboard_readonly`. Diagnóstico: endpoint
+correto, banco correto, usuário correto, código da `SqlConnectionFactory` correto, credencial lida
+diretamente da variável de ambiente pelos testes, login validado com sucesso via SSMS/sqlcmd, e
+teste isolado da factory passou quando a senha atual foi injetada. **Causa operacional confirmada:**
+o processo usava valor **desatualizado** de `ConnectionStrings__SisacDatabase`. Após atualizar a
+variável no escopo **User** e recarregar explicitamente
+(`$env:ConnectionStrings__SisacDatabase = [Environment]::GetEnvironmentVariable('ConnectionStrings__SisacDatabase','User')`),
+o resultado final foi **77/77 aprovados**. **Nenhuma senha nem connection string completa foram
+registradas.**
+
+*Estado funcional da T-11:*
+
+- **FATURAMENTO REALIZADO: IMPLEMENTADO E VALIDADO** (T-11A, commit `6061aba`);
+- **"A Faturar": PENDENTE de definição funcional** — **não marcada como entregue**;
+- **CA-04:** atendido **para faturamento realizado**; **CA-14:** **parcialmente pendente** na
+  distinção "A Faturar";
+- **T-11 permanece PARCIALMENTE CONCLUÍDA** — o `PLAN-001` exige também a distinção "A Faturar".
+
+*Commit da implementação:* **`6061aba`** — `feat(data): implement realized billing repository`
+(arquivos: `FaturamentoDto.cs`, `FaturamentoRepository.cs`, `FaturamentoRepositoryTests.cs`).
 
 ---
 

@@ -22,7 +22,7 @@
 | Arquitetura | `docs/architecture/proposta-arquitetural.md` + ADR-007..010 | Aprovada |
 | Requisitos | PRD-001 (Epic) / PRD-002 (Atendimentos) | Rascunho — revisão 2 |
 | Especificação | SPEC-UI-001, SPEC-VIS-001 | Aguardando validação humana |
-| Plano | PLAN-001 (T-01..T-21) | Execução em andamento — **T-14 CONCLUÍDA** (entrega 2026-10-07, extensão de mini-gráficos reais 2026-10-08, fechamento documental 2026-10-08; §3.3 e §3.3.1); **T-11 com diagnóstico pré-implementação concluído** (2026-10-08; §3.4) |
+| Plano | PLAN-001 (T-01..T-21) | Execução em andamento — **T-14 CONCLUÍDA** (entrega 2026-10-07, extensão de mini-gráficos reais 2026-10-08, fechamento documental 2026-10-08; §3.3 e §3.3.1); **T-11 com diagnóstico pré-implementação concluído** (2026-10-08; §3.4); **T-11A (faturamento realizado) implementada, validada e commitada** (`6061aba`, 2026-10-09; §3.4.2) — **T-11 permanece PARCIALMENTE CONCLUÍDA** ("A Faturar" pendente de definição funcional) |
 | Plano | PLAN-002 (T-01..T-08) — Análise por Convênio | **ENCERRADO (2026-10-06)** — T-01..T-08 concluídas, build 0/0, 72/72 testes, P19 reconciliado, UI integrada, **gate humano visual aprovado (2026-10-06)**; sem pendência funcional aberta; evolução gráfica não iniciada *(afirmação correta em 2026-10-06; a evolução gráfica foi executada depois, em 2026-10-07 — ver linha seguinte)* |
 | Plano | PLAN-003 (P3-T01..P3-T05) — Visualização Gráfica por Convênio | **ENCERRADO (2026-10-07)** — registro retroativo; gráfico horizontal SVG em Atendimentos, Consultas e Exames; responsividade validada (DevTools mobile); build 0/0, 72/72 testes, validações humanas concluídas; commits `0038c54`, `6619782`, `2c62fae`, `e9a3917` |
 | Revisão | REVIEW-T-08-2026-09-18 | Aprovado com ressalvas |
@@ -35,7 +35,7 @@
 | T-01..T-07 | Concluído | — |
 | **T-08** | **Implementado e Validado (reconciliado 2026-10-02)** | Integrados CA-03/CA-09/CA-18 (estado reconciliado 2026-10-02) |
 | **T-09, T-10** | **Concluído (reconciliado 2026-10-07)** | Entregas já existentes no código (`ConsultasVisaoRepository`/`ExamesVisaoRepository`, commits `9ab8f9c`/`f43aac0`) — PLAN-001 atualizado por reconciliação documental, sem reescrita de histórico; CA-09 com lacuna de validação declarada |
-| **T-11** | **Pendente — diagnóstico concluído (2026-10-08)** | Executar queries read-only Q1–Q6 pós-demo (após 15h de 08/10) e obter 2 gates humanas (equivalência "guia emitida" ≡ `('F','E')`; coluna da data de emissão) — ver §3.4 e PLAN-001 T-11 |
+| **T-11** | **Parcialmente concluída (2026-10-09)** — regras fechadas (2026-10-09, §3.4.1) e **T-11A (faturamento realizado = `FECHADO IN ('F','E')`) implementada, validada e commitada** (`6061aba`) | **"A Faturar" pendente de definição funcional** — ver §3.4.2 e PLAN-001 T-11 |
 | T-12, T-13, T-19 | Pendente | Elegíveis por dependência — ver §6, tensão objeto de reconciliação documental em 2026-10-02 |
 | **T-14** | **Concluído** (entrega e validação 2026-10-07; extensão de mini-gráficos reais 2026-10-08; fechamento documental 2026-10-08) | — (registros em §3.3 e §3.3.1) |
 | T-15..T-18, T-20, T-21 | Pendente | Bloqueadas |
@@ -253,6 +253,61 @@ documental.
 
 **Nesta rodada:** somente os 2 documentos alterados (`PLAN-001` e este `STATUS-002`); nenhum SQL,
 build, código, Home ou DI; nenhum `git add/commit/push`.
+
+### 3.4.2 — PLAN-001 / T-11A — implementação do faturamento realizado (aditivo, 2026-10-09)
+
+Registro **aditivo** do fechamento documental da **T-11A**. Preserva integralmente §3.4 e §3.4.1.
+A T-11A implementou **exclusivamente** `FATURAMENTO REALIZADO = FECHADO IN ('F','E')`, já
+commitada e enviada.
+
+**Implementação entregue (commit `6061aba` — `feat(data): implement realized billing repository`):**
+
+- `Dashboard.Core/DTOs/FaturamentoDto.cs` — DTO mínimo (`DataInicial`, `DataFinal`, `ValorFaturado`);
+- `Dashboard.Data/Repositories/FaturamentoRepository.cs` — SQL constante parametrizado, período
+  semiaberto, `SUM((F.Valor + F.CustoOP + F.Filme) * F.Quant)`, `SUM` NULL tratado no C# como `0`,
+  sem `COALESCE` por linha, sem concatenação de SQL;
+- `Dashboard.Data.Tests/Repositories/FaturamentoRepositoryTests.cs` — 5 testes (3 unitários de SQL + 2 de integração);
+- **sem** integração com Home, **sem** registro em DI, **sem** endpoint/página nova.
+
+**Fonte física (somente leitura):** banco **CASAMATER**; núcleo `ENTRADA + CADMEDICO +
+CADCONVENIO + FATURA`; join `FATURA F ON F.CodPaciente = E.CodMovimento`; filtros de faturamento
+(`E.Tipo IN ('1','3','4','5','6','7')`, `E.Fechado IN ('F','E')`, `E.LoteEnt <> 'INAT'`,
+`E.Restrito <> 'Z'`, `E.GrupoEmp='01'`, `E.Filial='01'`, `C.ModoFat IS NOT NULL`,
+`E.Guia <> 'GUIA MEDICO'`, `E.Guia <> 'LENTEC'`, `M.REDUZIDO IS NOT NULL`); período em
+`E.DataHoraEnt`.
+
+**Regras F/E/P/X (decisão humana validada pelo DBA, 2026-10-09):** `F` = faturada e ainda **NÃO
+enviada**; `E` = faturada e **enviada**; `P` = **parcial, ainda não cobrada**; `X` = **ignorada**.
+Faturamento realizado = `F` + `E`. Data de referência = `ENTRADA.DataHoraEnt`.
+
+**Permissões (evidência operacional):** `dashboard_readonly` já possuía `SELECT` em `ENTRADA` e
+`CADCONVENIO`; **concedido** `SELECT` em **`CADMEDICO`** e **`FATURA`**; nenhum outro acesso. A
+sub-slice não depende de `CADPACIENTE`, `FECHAMENTO` nem `LOCAL`.
+
+**Validação da fórmula (jan/2026, `F`+`E`):** linhas pós-join = **64.908**; NULLs simultâneos em
+`F.Valor`/`F.CustoOP`/`F.Filme`/`F.Quant` = **5 linhas**; fórmula literal = **R$ 9.097.862,40**;
+COALESCE diagnóstica = **R$ 9.097.862,40**; diferença **R$ 0,00** → fórmula **literal** adotada
+(COALESCE **não** promovido a regra).
+
+**Validação técnica final:** build **Release 0 erros/0 avisos**; `Dashboard.Core.Tests` **9/9**;
+`Dashboard.Data.Tests` **68/68**; **total 77/77, 0 falhas**.
+
+**Incidente 18456 (objetivo):** na validação inicial, **25 testes de integração** falharam com
+**SQL Server erro 18456** para `dashboard_readonly`. Diagnóstico: endpoint/banco/usuário/código da
+`SqlConnectionFactory` corretos; env lida diretamente pelos testes; login OK via SSMS/sqlcmd;
+factory isolada passou com a senha atual. **Causa operacional confirmada:** processo usava valor
+**desatualizado** de `ConnectionStrings__SisacDatabase`. Após atualizar no escopo **User** e
+recarregar explicitamente, resultado final **77/77**. **Sem registrar senha nem connection string.**
+
+**Estado funcional:** FATURAMENTO REALIZADO **implementado e validado**; "A Faturar" **pendente de
+definição funcional** (não entregue); **CA-04** atendido para faturamento realizado; **CA-14**
+parcialmente pendente na distinção "A Faturar". **T-11 permanece PARCIALMENTE CONCLUÍDA** — o
+PLAN-001 exige também "A Faturar".
+
+**Não iniciadas nesta rodada:** T-12, T-13 e T-15 (nenhuma foi iniciada).
+
+**Nesta rodada:** somente os 2 documentos alterados (`PLAN-001` e este `STATUS-002`); nenhum SQL,
+build, teste, código, Home ou DI; nenhum `git add/commit/push`.
 
 ## 4. R-05 — pendência aberta (bloqueio externo)
 
