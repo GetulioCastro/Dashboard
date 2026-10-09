@@ -22,7 +22,7 @@
 | Arquitetura | `docs/architecture/proposta-arquitetural.md` + ADR-007..010 | Aprovada |
 | Requisitos | PRD-001 (Epic) / PRD-002 (Atendimentos) | Rascunho — revisão 2 |
 | Especificação | SPEC-UI-001, SPEC-VIS-001 | Aguardando validação humana |
-| Plano | PLAN-001 (T-01..T-21) | Execução em andamento — **T-14 CONCLUÍDA** (entrega 2026-10-07, extensão de mini-gráficos reais 2026-10-08, fechamento documental 2026-10-08; §3.3 e §3.3.1); **T-11 com diagnóstico pré-implementação concluído** (2026-10-08; §3.4); **T-11A (faturamento realizado) implementada, validada e commitada** (`6061aba`, 2026-10-09; §3.4.2) — **T-11 permanece PARCIALMENTE CONCLUÍDA** ("A Faturar" pendente de definição funcional) |
+| Plano | PLAN-001 (T-01..T-21) | Execução em andamento — **T-14 CONCLUÍDA** (entrega 2026-10-07, extensão de mini-gráficos reais 2026-10-08, fechamento documental 2026-10-08; §3.3 e §3.3.1); **T-11 com diagnóstico pré-implementação concluído** (2026-10-08; §3.4); **T-11A (faturamento realizado) implementada, validada e commitada** (`6061aba`, 2026-10-09; §3.4.2) — **T-11 permanece PARCIALMENTE CONCLUÍDA** ("A Faturar" pendente de definição funcional); **T-13 com diagnóstico de ponte de dados concluído** (2026-10-09; §3.5) — implementação **não iniciada** |
 | Plano | PLAN-002 (T-01..T-08) — Análise por Convênio | **ENCERRADO (2026-10-06)** — T-01..T-08 concluídas, build 0/0, 72/72 testes, P19 reconciliado, UI integrada, **gate humano visual aprovado (2026-10-06)**; sem pendência funcional aberta; evolução gráfica não iniciada *(afirmação correta em 2026-10-06; a evolução gráfica foi executada depois, em 2026-10-07 — ver linha seguinte)* |
 | Plano | PLAN-003 (P3-T01..P3-T05) — Visualização Gráfica por Convênio | **ENCERRADO (2026-10-07)** — registro retroativo; gráfico horizontal SVG em Atendimentos, Consultas e Exames; responsividade validada (DevTools mobile); build 0/0, 72/72 testes, validações humanas concluídas; commits `0038c54`, `6619782`, `2c62fae`, `e9a3917` |
 | Revisão | REVIEW-T-08-2026-09-18 | Aprovado com ressalvas |
@@ -36,7 +36,8 @@
 | **T-08** | **Implementado e Validado (reconciliado 2026-10-02)** | Integrados CA-03/CA-09/CA-18 (estado reconciliado 2026-10-02) |
 | **T-09, T-10** | **Concluído (reconciliado 2026-10-07)** | Entregas já existentes no código (`ConsultasVisaoRepository`/`ExamesVisaoRepository`, commits `9ab8f9c`/`f43aac0`) — PLAN-001 atualizado por reconciliação documental, sem reescrita de histórico; CA-09 com lacuna de validação declarada |
 | **T-11** | **Parcialmente concluída (2026-10-09)** — regras fechadas (2026-10-09, §3.4.1) e **T-11A (faturamento realizado = `FECHADO IN ('F','E')`) implementada, validada e commitada** (`6061aba`) | **"A Faturar" pendente de definição funcional** — ver §3.4.2 e PLAN-001 T-11 |
-| T-12, T-13, T-19 | Pendente | Elegíveis por dependência — ver §6, tensão objeto de reconciliação documental em 2026-10-02 |
+| **T-13** | **Pendente — diagnóstico de ponte de dados concluído (2026-10-09)** | Metadados e cardinalidade `PAGAR`×`PAGARC` comprovados (K5 = 1:1); implementação **não iniciada**; pendências humanas de classificação/data abertas — ver §3.5 e PLAN-001 T-13 |
+| T-12, T-19 | Pendente | Elegíveis por dependência — ver §6, tensão objeto de reconciliação documental em 2026-10-02 |
 | **T-14** | **Concluído** (entrega e validação 2026-10-07; extensão de mini-gráficos reais 2026-10-08; fechamento documental 2026-10-08) | — (registros em §3.3 e §3.3.1) |
 | T-15..T-18, T-20, T-21 | Pendente | Bloqueadas |
 
@@ -308,6 +309,60 @@ PLAN-001 exige também "A Faturar".
 
 **Nesta rodada:** somente os 2 documentos alterados (`PLAN-001` e este `STATUS-002`); nenhum SQL,
 build, teste, código, Home ou DI; nenhum `git add/commit/push`.
+
+### 3.5 — PLAN-001 / T-13 — diagnóstico de ponte de dados (aditivo, 2026-10-09)
+
+Registro **aditivo** do encerramento controlado da sessão de diagnóstico da **T-13 (Despesas)**.
+Consolida **somente o que foi comprovado**; **nenhuma regra de negócio nova** foi criada e
+**nenhuma implementação** foi iniciada. Detalhamento em PLAN-001 T-13 ("Diagnóstico
+pré-implementação").
+
+**Ambiente efetivo (corrigido nesta sessão):** servidor/máquina **`LOKI` / `WIN-NM5QNCQTHEP`**,
+banco **`CASAMATER`**, login **`dashboard_readonly`**. A instância `DESENVHMSISAC02\MSSQLSERVER2022`
+é o ambiente **local/notebook** e **não** é o alvo principal das investigações atuais (divergência
+de ambiente registrada; não reconciliada por inferência).
+
+**Permissões:** `SELECT` concedido e validado em **`dbo.PAGAR`** e **`dbo.PAGARC`** (endpoint
+`SisacDatabase` corrigido; ver incidente 18456 em §3.4.2 — aqui **sem** nova ocorrência).
+
+**Metadados confirmados (INFORMATION_SCHEMA.COLUMNS):**
+
+- `PAGAR` (financeiro): `VALOR`, `VALORPAG`, `SALDO`, `DATAVENC`, `DATAPAG`, `DATAPREV`,
+  `DataEmissao`, `CODFORNECEDOR`, `NFISCAL`, `NPARC`, `GRUPOEMP`, `FILIAL`;
+- `PAGARC` (classificação): `TIPOCUSTO`, `NATOP`, `CCUSTO`, `REPASSE` (+ `VALOR`, `DATAVENC`,
+  `DATAPAG`, `DATAEMISSAO`, `CODFORNECEDOR`, `NFISCAL`, `NPARC`, `GRUPOEMP`, `FILIAL`);
+- **ausentes em `PAGARC`:** `VALORPAG`, `SALDO`, `DATAPREV`;
+- **a classificação não existe em `PAGAR`** — reside em `PAGARC`.
+
+**Ponte PAGAR × PAGARC (K5 = `CODFORNECEDOR`+`NFISCAL`+`NPARC`+`GRUPOEMP`+`FILIAL`):**
+
+| Medida | Valor |
+|---|---|
+| `PAGAR` linhas / chaves | 212.664 / 212.664 |
+| `PAGARC` linhas / chaves | 193.836 / 193.836 |
+| `PAGAR` com par em `PAGARC` | 191.797 (90,19%) |
+| `PAGAR` sem par | 20.867 (9,81%) |
+| `PAGARC` sem par em `PAGAR` | 2.039 |
+| Cardinalidade por K5 | **1:1** |
+| Média / máximo `PAGARC` por chave casada | 1,0000 / 1 |
+| Classificações múltiplas por chave | 0 (TIPO/NATOP/REPASSE/CCUSTO) |
+
+**Consequências comprovadas:** K5 é **obrigatória**; **não** usar K4 (sem `NPARC`); o risco de
+fan-out/dupla contagem por multiplicação fica **eliminado** pela K5; **não** somar `PAGAR.VALOR` e
+`PAGARC.VALOR` juntos; o risco residual é de **cobertura/classificação**, não de multiplicação.
+
+**Pendências humanas (não resolvidas por SQL):** (1) mapeamento `TIPOCUSTO`/`NATOP`/`CCUSTO`/`REPASSE`
+→ fixa × variável; (2) tratamento dos 20.867 títulos `PAGAR` sem par; (3) data de referência
+(`DataEmissao`/`DATAVENC`/`DATAPAG`/`DATAPREV`); (4) inclusão provisionada/paga/cancelada/estornada;
+(5) regra de repasse médico; (6) executar as distribuições Q1–Q6 revisadas.
+
+**Próxima retomada:** recuperar este contexto; **não** reabrir investigação encerrada; **não** repetir
+grants/permissões; **não** redescobrir K5; iniciar pelas distribuições agregadas de
+`TIPOCUSTO`/`NATOP`/`REPASSE`/`CCUSTO`; analisar preenchimento das datas; identificar campos de
+cancelamento/estorno; levar ao gate humano; só então discutir o repositório da T-13.
+
+**Nesta rodada:** nenhuma query de dados executada no fechamento; nenhum código, build, DI, Home ou
+Git write; somente os 2 documentos de status/planejamento alterados.
 
 ## 4. R-05 — pendência aberta (bloqueio externo)
 

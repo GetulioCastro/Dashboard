@@ -769,7 +769,7 @@ Implementar a consulta de Produção Médica conforme o contrato de dados (T-03)
 
 #### T-13 — Implementar query de Despesas em Dashboard.Data
 
-- **Status:** Pendente
+- **Status:** Pendente — **diagnóstico de ponte de dados concluído em 2026-10-09** (metadados físicos + cardinalidade PAGAR × PAGARC comprovadas; ver "Diagnóstico pré-implementação" abaixo). **Implementação não iniciada**; pendências humanas de classificação/data permanecem abertas
 - **Complexidade:** Média
 - **Depende de:** T-05, T-07
 - **Implementa:** RN-37, RN-38, RN-39
@@ -795,6 +795,63 @@ Implementar a consulta de Despesas conforme o contrato de dados (T-03) e a compo
 **Riscos / pontos de atenção:**
 - **Bloqueado até T-02/T-03** — composição de despesas (Q5), data de referência e origem no novo banco são requisitos de T-02
 - Nenhuma despesa inventada — apenas o que o contrato expor
+
+**Diagnóstico pré-implementação (2026-10-09 — somente leitura, sem código):**
+
+Diagnóstico de viabilidade da T-13, **sem** definir regra de negócio e **sem** implementar. Consolida
+apenas o que foi efetivamente comprovado por metadados e agregados read-only.
+
+*Ambiente efetivo (corrigido nesta sessão):* servidor/máquina **`LOKI` / `WIN-NM5QNCQTHEP`**, banco
+**`CASAMATER`**, login de aplicação **`dashboard_readonly`**. A instância anterior
+`DESENVHMSISAC02\MSSQLSERVER2022` corresponde ao ambiente **local/notebook** e **não** é o alvo das
+investigações atuais.
+
+*Permissões:* `SELECT` concedido e validado em **`dbo.PAGAR`** e **`dbo.PAGARC`**.
+
+*Metadados confirmados:*
+
+- **`PAGAR`** (financeiro): `VALOR`, `VALORPAG`, `SALDO`, `DATAVENC`, `DATAPAG`, `DATAPREV`, `DataEmissao`, `CODFORNECEDOR`, `NFISCAL`, `NPARC`, `GRUPOEMP`, `FILIAL`;
+- **`PAGARC`** (classificação + financeiro parcial): `VALOR`, `DATAVENC`, `DATAPAG`, `DATAEMISSAO`, `CODFORNECEDOR`, `NFISCAL`, `NPARC`, `GRUPOEMP`, `FILIAL`, `CCUSTO`, `NATOP`, `REPASSE`, `TIPOCUSTO`;
+- **ausentes em `PAGARC`:** `VALORPAG`, `SALDO`, `DATAPREV`;
+- **classificação (`TIPOCUSTO`/`NATOP`/`CCUSTO`/`REPASSE`) está em `PAGARC`, não em `PAGAR`**.
+
+*Ponte PAGAR × PAGARC (chave K5 = `CODFORNECEDOR` + `NFISCAL` + `NPARC` + `GRUPOEMP` + `FILIAL`):*
+
+| Medida | Valor |
+|---|---|
+| `PAGAR` linhas / chaves distintas | 212.664 / 212.664 |
+| `PAGARC` linhas / chaves distintas | 193.836 / 193.836 |
+| `PAGAR` com correspondente em `PAGARC` | 191.797 (90,19%) |
+| `PAGAR` sem correspondente | 20.867 (9,81%) |
+| `PAGARC` sem correspondente em `PAGAR` | 2.039 |
+| Cardinalidade pela K5 | **1:1** |
+| Média / máximo de linhas `PAGARC` por chave casada | 1,0000 / 1 |
+| Chaves com `TIPOCUSTO`/`NATOP`/`REPASSE`/`CCUSTO` múltiplos | 0 / 0 / 0 / 0 |
+
+*Consequências comprovadas:*
+
+- **K5 (com `NPARC`) é obrigatória** para a ponte `PAGAR` × `PAGARC`; **não** usar K4 (sem `NPARC`);
+- o **risco de fan-out/dupla contagem** por multiplicação fica **eliminado pela K5** (relação 1:1);
+- **não somar** `PAGAR.VALOR` e `PAGARC.VALOR` juntos (mesma base);
+- a preocupação residual é de **cobertura/classificação** (20.867 títulos `PAGAR` sem par em `PAGARC`), **não** de multiplicação.
+
+*Pendências humanas AINDA NÃO decididas (não são resolvidas por SQL):*
+
+1. mapeamento de `TIPOCUSTO` / `NATOP` / `CCUSTO` / `REPASSE` para **Fixa × Variável**;
+2. tratamento dos **20.867** títulos `PAGAR` sem correspondente em `PAGARC`;
+3. escolha da **data de referência** do indicador (`DataEmissao` / `DATAVENC` / `DATAPAG` / `DATAPREV`);
+4. definição de inclusão: **provisionada / paga / cancelada / estornada**;
+5. confirmar regra para **repasse médico**;
+6. executar, em retomada, as **distribuições agregadas Q1–Q6 revisadas**.
+
+*Próxima retomada (registrado para continuidade):* recuperar contexto, **não** reabrir investigação
+encerrada, **não** repetir grants/testes de permissão, **não** redescobrir K5; começar pelas
+distribuições agregadas de `TIPOCUSTO`, `NATOP`, `REPASSE`, `CCUSTO`; analisar preenchimento das
+datas; identificar possíveis campos de cancelamento/estorno; levar ao gate humano; **somente depois**
+discutir a implementação do repositório da T-13.
+
+*Nesta rodada:* nenhum código, SQL de dados, build, DI, Home ou Git write; somente leitura de
+metadados/agregados.
 
 ---
 
