@@ -364,6 +364,99 @@ T-03 identifica as **estruturas físicas** que representam os conceitos de negó
 - [ ] **P31:** Confirmar a fonte de especialidade: `CADMEDICO.ESPECIALIDADE` (texto) vs `CADMEDICOESP`/`ESPECIALIDADE` (relacional).
 - [ ] **P32:** Investigar se existem profissionais não-médicos no SisacHTML5 (`CADPROF` está vazia no legado).
 
+> **Acompanhamento (2026-10-13):** **P28, P29 e P30 foram DECIDIDOS FUNCIONALMENTE EM 13/10/2026**
+> (gate humana) — ver §9.7. As evidências, hipóteses e limitações técnicas acima **permanecem
+> preservadas**; as pendências P27 e P31/P32 **não** integram a decisão (especialidade é evolução no
+> MVP — RN-15).
+
+### 9.7. Decisão funcional (2026-10-13) e validações técnicas pendentes
+
+**Decisão funcional (gate humana, 2026-10-13) — válida para o MVP do DashboardSB:**
+
+- **P29 — unidade técnica de produção:** **DECIDIDO = quantidade de movimentos válidos**.
+- **P28 — profissional ativo:** **DECIDIDO = profissional com pelo menos um movimento válido no período
+  selecionado**. Definição **operacional e restrita ao indicador de Produção Médica**; **não** equivale
+  necessariamente à situação administrativa do profissional em `CADMEDICO`.
+- **P30 — papel profissional:** **DECIDIDO = atribuir a produção ao profissional de `ENTRADA.CODMEDICO`**.
+  O campo **não** comprova, isoladamente, a execução física de todos os procedimentos. **Não** somar
+  `CODMEDICO`, `MEDRESP` e `CODANEST`; **não** criar regra de prioridade entre eles.
+
+**Separação decisão × validação:** o que antecede é **decisão funcional**. A **validação técnica** no
+banco do SisacHTML5 (identificador de movimento, filtros, joins, cardinalidade, agregações) **permanece
+PENDENTE**. **Nenhuma implementação** foi realizada; **nenhum** campo, join ou filtro foi inventado.
+
+**Validações técnicas pendentes:**
+
+- [ ] **V-01 — Unidade contável:** identificar qual identificador representa um **movimento válido** e se
+  `COUNT(*)` ou `COUNT(DISTINCT …)` é adequado. **Não** presumir que cada linha de `ENTRADA` corresponda a
+  exatamente um movimento de produção.
+- [ ] **V-02 — Regra de validade:** **DECIDIDA FUNCIONALMENTE em 2026-10-13 (ver §9.8)** — excluir
+  movimentos com `ENTRADA.FECHADO = 'C'` **ou** `ENTRADA.LOTEENT = 'INAT'` (condições **independentes**),
+  **sem** transportar automaticamente outras condições da RN-07. Evidência anterior **preservada**: o
+  legado aplica `Fechado <> 'C'` à Produção (`dicionario-de-dados.md §2`, tabela de fórmulas legadas).
+  A **aplicação técnica** das condições **ainda não foi implementada nem validada**.
+- [ ] **V-03 — Atribuição profissional:** confirmar o tratamento de `ENTRADA.CODMEDICO` vazio, `NULL` ou
+  sem correspondência em `CADMEDICO`. **Não** atribuir movimentos automaticamente a outros papéis.
+- [ ] **V-04 — Denominador:** garantir que o número de "profissionais ativos" seja calculado com
+  profissionais **distintos** com movimento válido no período; prevenir duplicidade por joins.
+- [ ] **V-05 — Cobertura e categoria:** validar os agrupamentos Particular/Convênio/SUS (RN-35) e
+  categoria do serviço (RN-36). **Não** presumir que toda categoria esteja diretamente disponível em
+  `ENTRADA`.
+- [ ] **V-06 — Métrica e período:** **DECIDIDA FUNCIONALMENTE em 2026-10-13 (ver §9.8)** — campo de
+  referência `ENTRADA.DATAHORAENT`, em intervalo **semiaberto**
+  (`DATAHORAENT >= DataInicial AND DATAHORAENT < LimiteExclusivoFinal`). A **verificação técnica**
+  (consistência entre numerador, denominador, período e dimensões) **permanece pendente**.
+- [ ] **V-07 — Casos-limite:** registrar denominador zero, ausência de movimento e profissional sem
+  identificador válido — **sem** inventar regra de apresentação além do já especificado (RN-03/CA-09).
+
+### 9.8. Decisões funcionais V-02/V-06 (2026-10-13) e evidências das Queries A/B
+
+**Decisão funcional (gate humana, 2026-10-13) — válida para o MVP do DashboardSB:**
+
+- **V-02 — critério de movimento válido: DECIDIDA FUNCIONALMENTE.** Excluir do indicador de Produção
+  Médica os movimentos em que `ENTRADA.FECHADO = 'C'` **ou** `ENTRADA.LOTEENT = 'INAT'`. As duas
+  condições de exclusão são **independentes** — o movimento é excluído se satisfizer **qualquer uma**
+  delas. **Não** se transportam automaticamente para a Produção Médica outras condições da regra de
+  Atendimentos (RN-07).
+- **V-06 — campo temporal: DECIDIDA FUNCIONALMENTE.** O período do indicador usa
+  `ENTRADA.DATAHORAENT` como campo de referência, em intervalo **semiaberto**
+  (`DATAHORAENT >= DataInicial AND DATAHORAENT < LimiteExclusivoFinal`); a definição do limite exclusivo
+  respeita a granularidade e os contratos existentes.
+
+> **Separação decisão × validação (preservada):** o que antecede é **decisão funcional**. As evidências
+> e limitações técnicas anteriores desta seção (§9.3–§9.7) **permanecem** e **não** são substituídas.
+> A **aplicação técnica** das condições de V-02 e a **verificação** de V-06 **ainda não foram
+> implementadas nem validadas**; **nenhuma** implementação, repository, campo, join ou filtro foi criado.
+
+**Cuidado com NULL (registro explícito — sem inventar comportamento não aprovado):** a decisão V-02
+enuncia **igualdade** (`FECHADO = 'C'`, `LOTEENT = 'INAT'`); **não** define, por si só, o tratamento de
+`LOTEENT`/`FECHADO` `NULL` ou vazio. A decisão **não** prescreve `COALESCE`, `IS NULL` nem qualquer
+normalização — esse tratamento fica a cargo da **validação técnica de implementação**, não sendo
+presumido aqui.
+
+**Evidências — Query A** (execução única, somente leitura; recorte `DATAHORAENT >= '2024-01-01' AND < '2025-01-01'`):
+
+- Linhas: **106773**.
+- Chaves triplas distintas (`CODMOVIMENTO + GRUPOEMP + FILIAL`): **106773**.
+- `CODMOVIMENTO` distintos: **106771**.
+- `CODMEDICO` nulo/vazio: **12** (descritivo — **não** presumido como produção atribuída).
+- Tempo observado: **1750 ms**.
+
+**Evidências — Query B** (execução única, somente leitura; **mesmo recorte de 2024**):
+
+- Total reconciliado: **106773** (igual a `Linhas` da Query A).
+- Combinações `FECHADO × LOTEENT`: **2087**.
+- Valores distintos de `LOTEENT`: **1996**.
+- `FECHADO = 'C'`: **2648** registros.
+- `LOTEENT = 'INAT'`: **4516** registros.
+- Interseção `C + INAT`: **7** registros.
+- Tempo observado: **671 ms**.
+
+> **Nota de leitura:** `106773 − 2648 − 4516 + 7` = **99616**, um **total aritmético derivado** das
+> exclusões observadas no recorte. **Não** é um total de produtividade médica validado: a unidade
+> contável (V-01), a atribuição profissional (V-03/V-04) e a cobertura/categoria (V-05) permanecem
+> abertas. Movimentos com `CODMEDICO` vazio/nulo **não** são produção atribuída.
+
 ---
 
 ## 10. Domínio — Despesas
@@ -689,7 +782,7 @@ dbo.LOCAL (árvore de unidades)
 
 - **Despesas:** origem estrutural **resolvida (D)**. Regra de negócio provisionada → **E/P**, decidida na Fase 3. **Não bloqueia a fundação estrutural.**
 - **Retorno:** o vínculo Consulta→Retorno (regra de 30 dias) não tem representação física identificada — pode exigir cálculo derivado ou campo não mapeado.
-- **Produção médica:** a unidade técnica de produção não foi definida — sem ela, não é possível implementar o indicador.
+- **Produção médica:** a unidade técnica de produção não foi definida — sem ela, não é possível implementar o indicador. *(Registro histórico de 2026-09-17.)* **Atualização (2026-10-13):** a unidade técnica de produção (P29), o critério de profissional ativo (P28) e o papel profissional (P30) foram **DECIDIDOS FUNCIONALMENTE** na gate humana de 2026-10-13 — ver §9.7. As **validações técnicas** de campo/join/filtro/cardinalidade **seguem pendentes**; nenhuma implementação foi realizada.
 
 ---
 

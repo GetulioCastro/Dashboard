@@ -40,7 +40,7 @@
 | **T-09, T-10** | **Concluído (reconciliado 2026-10-07)** | Entregas já existentes no código (`ConsultasVisaoRepository`/`ExamesVisaoRepository`, commits `9ab8f9c`/`f43aac0`) — PLAN-001 atualizado por reconciliação documental, sem reescrita de histórico; CA-09 com lacuna de validação declarada. **T-09: review `REVIEW-T-09-2026-10-13` — Aprovado com ressalvas (round 1)**; decisão humana 2026-10-13 (Retornos `TIPO='2'` excluídos do indicador de Consultas; R-02 resolvido documentalmente); **R-01** (escopo implementado > declarado) sob acompanhamento; **R-03** (estado vazio × RN-03/CA-09) **pendente de correção e validação — não resolvido**; R-04..R-07 sugestões não bloqueantes. **T-10: review `REVIEW-T-10-2026-10-13` — Aprovado com ressalvas (round 1)**; decisão humana 2026-10-13 (distribuição de Exames **por tipo/grupo** — RN-29 — **adiada para pós-MVP**; só o **total** vigora; R-02 resolvido documentalmente); **R-01** (asserção `exames ≤ consultas`) **aberto** (pendência técnica); **R-03** (estado vazio × RN-03/CA-09) **aberto** (pendência funcional); **R-04** (escopo > declarado) sob acompanhamento documental; R-05..R-08 sugestões não bloqueantes — ver §3.7 |
 | **T-11** | **Parcialmente concluída (2026-10-09)** — regras fechadas (2026-10-09, §3.4.1) e **T-11A (faturamento realizado = `FECHADO IN ('F','E')`) implementada, validada e commitada** (`6061aba`) | **"A Faturar" pendente de definição funcional** — ver §3.4.2 e PLAN-001 T-11 |
 | **T-13** | **Pendente — diagnóstico de ponte de dados concluído (2026-10-09)** | Metadados e cardinalidade `PAGAR`×`PAGARC` comprovados (K5 = 1:1); implementação **não iniciada**; pendências humanas de classificação/data abertas — ver §3.5 e PLAN-001 T-13 |
-| T-12, T-19 | Pendente | Elegíveis por dependência — ver §6, tensão objeto de reconciliação documental em 2026-10-02 |
+| T-12, T-19 | Pendente | Elegíveis por dependência — ver §6, tensão objeto de reconciliação documental em 2026-10-02. **T-12:** decisões funcionais P28/P29/P30 aprovadas no gate humano de 2026-10-13 (Produção Médica); decisões funcionais **V-02/V-06** aprovadas no mesmo gate e **evidências das Queries A/B reconciliadas** — **implementação não iniciada**, validações técnicas V-01..V-07 abertas — ver §3.8 e §3.9 |
 | **T-14** | **Concluído** (entrega e validação 2026-10-07; extensão de mini-gráficos reais 2026-10-08; fechamento documental 2026-10-08) | — (registros em §3.3 e §3.3.1). **Review `REVIEW-T-14-2026-10-13` — Aprovado com ressalvas**; critério 3 (cobertura — RN-26) **realocado à T-17** por decisão humana de 2026-10-13 (§3.6) |
 | T-15..T-18, T-20, T-21 | Pendente | Bloqueadas |
 
@@ -423,6 +423,73 @@ a linha T-09/T-10 da §3 permanece como estado anterior, ampliada nesta data.
 **Nesta rodada:** alterações somente documentais — `PRD-001`, `PLAN-001`, `REVIEW-T-10-2026-10-13` e
 este `STATUS-002`; nenhum código, teste, build, SQL, banco, commit ou push; nenhum estado de outra
 tarefa alterado (T-11, T-12, T-13, T-16, T-17, T-19 não tocadas).
+
+### 3.8 — PLAN-001 / T-12 — decisões funcionais da Produção Médica (aditivo, 2026-10-13)
+
+Registro **aditivo** do **gate humano de 13/10/2026** que formaliza as definições funcionais do
+indicador de **Produção Médica** (pendências **P28/P29/P30** do contrato de dados). Não altera o
+conteúdo das seções anteriores; a linha T-12/T-19 da §3 permanece como estado anterior, ampliada
+nesta data. **Nenhuma implementação foi iniciada.**
+
+- **Gate humano (2026-10-13) — decisões aprovadas (válidas para o MVP do DashboardSB):**
+  - **P29 — unidade técnica de produção:** **quantidade de movimentos válidos**;
+  - **P28 — profissional ativo (definição operacional):** profissional com **pelo menos um movimento
+    válido** no período selecionado — definição **operacional e restrita ao indicador de Produção
+    Médica**, **não** equivalendo necessariamente à situação administrativa do profissional em
+    `CADMEDICO`;
+  - **P30 — papel profissional:** atribuição da produção ao profissional de **`ENTRADA.CODMEDICO`**;
+    **não** somar `CODMEDICO`, `MEDRESP` e `CODANEST`; **sem** regra de prioridade entre eles.
+- **Regras preservadas:** **RN-14, RN-16, RN-34, RN-35 e RN-36** permanecem inalteradas em sua
+  redação original (a decisão é definição funcional, não alteração de regra).
+- **Separação decisão × validação:** as decisões acima são **funcionais**; a **validação técnica** no
+  banco **permanece PENDENTE** e **nenhuma implementação** foi realizada.
+- **Validações técnicas ainda abertas (V-01..V-07):** unidade contável (V-01), regra de validade
+  (V-02), atribuição profissional (V-03), denominador/profissionais distintos (V-04), cobertura e
+  categoria (V-05), métrica e período (V-06) e casos-limite (V-07) — detalhadas em
+  `docs/architecture/contrato-dados-dashboard.md §9.7`.
+- **T-12:** permanece **`Pendente`**; **implementação NÃO iniciada**; critérios de aceite **não**
+  atendidos. A T-12 **não deve ser declarada pronta para implementação integral** enquanto as lacunas
+  técnicas (V-01..V-07) não forem validadas. As demais tarefas (T-11, T-13, T-14, T-17, T-19) **não**
+  são alteradas.
+- **Formalização:** `PRD-001` (Nota T-12/2026-10-13, v2.4), `contrato-dados-dashboard.md §9.7`,
+  `dicionario-de-dados.md` (referência às decisões) e `PLAN-001` (T-12).
+
+**Nesta rodada:** alterações somente documentais — `PRD-001`, `contrato-dados-dashboard.md`,
+`dicionario-de-dados.md`, `PLAN-001` e este `STATUS-002`; nenhum código, teste, build, SQL, banco,
+commit ou push; **nenhum estado de outra tarefa alterado** (T-11, T-13, T-14, T-17, T-19 não tocadas).
+
+### 3.9 — PLAN-001 / T-12 — decisões funcionais V-02/V-06 e evidências das Queries A/B (aditivo, 2026-10-13)
+
+Registro **aditivo** ao §3.8: o **gate humano de 13/10/2026** aprovou também as decisões funcionais
+**V-02** e **V-06** da **Produção Médica** e autorizou a **execução única, somente-leitura**, das Queries
+A/B de reconhecimento. Não altera as seções anteriores; **nenhuma implementação foi iniciada**.
+
+- **Gate humano (2026-10-13) — decisões aprovadas (válidas para o MVP do DashboardSB):**
+  - **V-02 — critério de movimento válido (DECIDIDA FUNCIONALMENTE):** excluir movimentos com
+    `ENTRADA.FECHADO = 'C'` **ou** `ENTRADA.LOTEENT = 'INAT'` (condições **independentes**); **não**
+    transportar automaticamente outras condições da RN-07;
+  - **V-06 — campo temporal (DECIDIDA FUNCIONALMENTE):** `ENTRADA.DATAHORAENT` como campo de referência,
+    em intervalo **semiaberto** (`DATAHORAENT >= DataInicial AND < LimiteExclusivoFinal`).
+- **Reconciliação das evidências (Queries A/B — execução única somente-leitura em 2026-10-13; detalhe
+  em `docs/architecture/contrato-dados-dashboard.md §9.8`):**
+  - **Query A** (recorte 2024): linhas = **106773**; chaves triplas (`CODMOVIMENTO+GRUPOEMP+FILIAL`)
+    distintas = **106773**; `CODMOVIMENTO` distintos = **106771**; `CODMEDICO` nulo/vazio = **12**;
+    ~**1750 ms**;
+  - **Query B** (mesmo recorte): total reconciliado = **106773**; `FECHADO='C'` = **2648**;
+    `LOTEENT='INAT'` = **4516**; interseção `C + INAT` = **7**; combinações `FECHADO×LOTEENT` = **2087**;
+    ~**671 ms**;
+  - o total **99616** (= 106773 − 2648 − 4516 + 7) é **aritmético derivado das exclusões** — **não** é
+    total de produtividade validado.
+- **Estado das validações:** **V-01, V-03, V-04, V-05 e V-07 seguem abertas**; **V-02/V-06** têm decisão
+  funcional registrada com **implementação e verificação técnicas pendentes**.
+- **T-12:** permanece **`Pendente`**; critérios de aceite **não** atendidos; demais tarefas (T-11, T-13,
+  T-14, T-17, T-19) **não** alteradas.
+- **Formalização:** `PRD-001` (Nota T-12/V-02/V-06, v2.5), `contrato-dados-dashboard.md §9.8`,
+  `dicionario-de-dados.md` (referência V-02/V-06) e `PLAN-001` (T-12).
+
+**Nesta rodada:** alterações somente documentais — `PRD-001`, `contrato-dados-dashboard.md`,
+`dicionario-de-dados.md`, `PLAN-001` e este `STATUS-002`; nenhum código, teste, build, SQL, banco,
+commit ou push; **nenhum estado de outra tarefa alterado**.
 
 ## 4. R-05 — pendência aberta (bloqueio externo)
 

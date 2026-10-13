@@ -782,6 +782,68 @@ registradas.**
 **Descrição:**
 Implementar a consulta de Produção Médica conforme o contrato de dados (T-03) e a métrica de produtividade formalizada em T-02: medida de produção por **profissional ativo** no período (RN-16, RN-34), análise **individual/profissional** por categoria de cobertura (RN-26, RN-35) e por categoria do serviço (RN-26, RN-36). **A definição de produtividade e de "profissional ativo" (Q3) vem de T-02 — sem ela, a tarefa não é implementável.**
 
+> **Decisão humana (2026-10-13) — definições funcionais da Produção Médica (P28/P29/P30):**
+> a gate humana de **13/10/2026** aprovou, para o **MVP do DashboardSB**, as definições funcionais das
+> três pendências do contrato de dados que bloqueavam a T-12:
+>
+> - **P29 — unidade técnica de produção:** **quantidade de movimentos válidos**;
+> - **P28 — profissional ativo (definição operacional):** profissional com **pelo menos um movimento
+>   válido** no período selecionado — definição **operacional e restrita ao indicador de Produção
+>   Médica**, **não** equivalendo necessariamente à situação administrativa do profissional em
+>   `CADMEDICO`;
+> - **P30 — papel profissional:** a produção é atribuída ao profissional identificado em
+>   **`ENTRADA.CODMEDICO`**. O campo **não** comprova, isoladamente, a execução física de todos os
+>   procedimentos. **Não** somar `CODMEDICO`, `MEDRESP` e `CODANEST`; **não** criar regra de prioridade
+>   entre eles.
+>
+> **Regras preservadas:** **RN-14, RN-16, RN-34, RN-35 e RN-36** permanecem inalteradas em sua redação
+> original (é definição funcional, não alteração de regra).
+>
+> **Estado de implementação:** a **implementação ainda NÃO foi iniciada**. A T-12 **permanece
+> `Pendente`** e seus **critérios de aceite abaixo permanecem em aberto** (nada marcado como atendido).
+>
+> **Validações técnicas pendentes (não executadas nesta rodada; detalhadas no
+> `docs/architecture/contrato-dados-dashboard.md §9.7`):**
+> - [ ] **V-01 — Unidade contável:** identificador do movimento válido; `COUNT(*)` × `COUNT(DISTINCT)`.
+> - [ ] **V-02 — Regra de validade — DECIDIDA FUNCIONALMENTE (2026-10-13, ver bloco abaixo):** excluir movimentos com `ENTRADA.FECHADO='C'` **ou** `ENTRADA.LOTEENT='INAT'` (condições independentes); **aplicação técnica ainda não implementada**.
+> - [ ] **V-03 — Atribuição profissional:** tratamento de `CODMEDICO` vazio/`NULL`/sem correspondência em `CADMEDICO`.
+> - [ ] **V-04 — Denominador:** profissionais **distintos** com movimento válido; prevenir duplicidade por joins.
+> - [ ] **V-05 — Cobertura e categoria:** validar agrupamentos Particular/Convênio/SUS (RN-35) e categoria do serviço (RN-36).
+> - [ ] **V-06 — Métrica e período — DECIDIDA FUNCIONALMENTE (2026-10-13, ver bloco abaixo):** campo de referência `ENTRADA.DATAHORAENT`, intervalo **semiaberto**; **verificação técnica pendente**.
+> - [ ] **V-07 — Casos-limite:** denominador zero, ausência de movimento e profissional sem identificador válido (RN-03/CA-09).
+>
+> A T-12 **não deve ser declarada pronta para implementação integral** enquanto as lacunas técnicas
+> (V-01..V-07) não forem validadas. As **dependências** (`Depende de: T-05, T-07`), os **requisitos**
+> (`Implementa: RN-14, RN-16, RN-34, RN-35, RN-36, RN-26`) e os **critérios de aceite** existentes
+> **permanecem preservados**.
+
+> **Decisão humana (2026-10-13) — decisões funcionais V-02/V-06 da Produção Médica:**
+> a mesma gate humana de **13/10/2026** aprovou as decisões **V-02** e **V-06**:
+>
+> - **V-02 — critério de movimento válido (DECIDIDA FUNCIONALMENTE):** excluir do indicador os movimentos
+>   em que `ENTRADA.FECHADO = 'C'` **ou** `ENTRADA.LOTEENT = 'INAT'`. As duas condições são
+>   **independentes** (exclui se satisfizer **qualquer uma**). **Não** se transportam automaticamente
+>   outras condições da regra de Atendimentos (RN-07).
+> - **V-06 — campo temporal (DECIDIDA FUNCIONALMENTE):** o período usa `ENTRADA.DATAHORAENT` como campo de
+>   referência, em intervalo **semiaberto** (`DATAHORAENT >= DataInicial AND < LimiteExclusivoFinal`).
+>
+> **Separação decisão × validação:** V-02/V-06 são **decisões funcionais**; a **aplicação técnica** das
+> condições de V-02 e a **verificação** de V-06 **ainda não foram implementadas nem validadas**.
+>
+> **Evidência técnica (Queries A/B — execução única somente-leitura em 2026-10-13; detalhe no
+> `docs/architecture/contrato-dados-dashboard.md §9.8`):**
+> - **Query A** (recorte 2024): linhas = **106773**; chaves triplas (`CODMOVIMENTO+GRUPOEMP+FILIAL`)
+>   distintas = **106773**; `CODMOVIMENTO` distintos = **106771**; `CODMEDICO` nulo/vazio = **12**;
+>   ~**1750 ms**.
+> - **Query B** (mesmo recorte): total reconciliado = **106773**; `FECHADO='C'` = **2648**;
+>   `LOTEENT='INAT'` = **4516**; interseção `C + INAT` = **7**; combinações `FECHADO×LOTEENT` = **2087**;
+>   ~**671 ms**. O total **99616** (= 106773 − 2648 − 4516 + 7) é **aritmético derivado das exclusões**,
+>   **não** um total de produtividade validado.
+>
+> **Estado das validações:** **V-01, V-03, V-04, V-05 e V-07 permanecem em aberto**; **V-02/V-06** têm
+> decisão funcional registrada, mas **implementação e verificação técnicas pendentes**. A T-12
+> **permanece `Pendente`** e os **critérios de aceite permanecem em aberto** (nada marcado como atendido).
+
 **Critério de aceite (testável):**
 - [ ] Query calcula a produtividade pela métrica formalizada (RN-14, RN-16, RN-34)
 - [ ] Análise individual/profissional por cobertura: Particular/Convênio/SUS (RN-35)

@@ -208,6 +208,41 @@ flowchart TD
 - **RN-36:** A Produção Médica deve permitir análise por **categoria do serviço de saúde**: Particular, Convênio, SUS (RN-26).
 - **RN-15:** A Produção Médica pode ser analisada por categoria de cobertura (RN-26). *Filtro por especialidade e por unidade serão formalizados (especialidade: fonte a definir).*
 
+> **Nota (decisão humana T-12 — 13/10/2026):** foram aprovadas as definições funcionais do indicador
+> de **Produção Médica** (pendências P28/P29/P30 do contrato de dados), válidas para o **MVP**:
+>
+> - **P29 — unidade técnica de produção:** **quantidade de movimentos válidos**.
+> - **P28 — profissional ativo (definição operacional):** profissional com **pelo menos um movimento
+>   válido** no período selecionado. Esta definição é **operacional e restrita ao indicador de Produção
+>   Médica** — **não** equivale necessariamente à situação administrativa do profissional em
+>   `CADMEDICO`.
+> - **P30 — papel profissional:** a produção é atribuída ao profissional identificado em
+>   **`ENTRADA.CODMEDICO`**. O campo **não** comprova, isoladamente, a execução física de todos os
+>   procedimentos. **Não** se somam `CODMEDICO`, `MEDRESP` e `CODANEST`, nem se cria regra de prioridade
+> entre esses campos.
+>
+> Esta Nota **não altera** a redação das **RN-14, RN-16, RN-34, RN-35 e RN-36** (preservadas). As
+> **validações técnicas** remanescentes (unidade contável, regra de validade, atribuição profissional,
+> denominador, cobertura/categoria, métrica/período e casos-limite) estão registradas no **contrato de
+> dados §9.7** e no `PLAN-001` (T-12). A **implementação ainda não foi iniciada**.
+
+> **Nota (decisão humana T-12 — 13/10/2026) — V-02 e V-06:** foram aprovadas as duas decisões funcionais
+> seguintes para a **Produção Médica** (válidas para o **MVP**):
+>
+> - **V-02 — critério de movimento válido:** excluir do indicador os movimentos em que
+>   **`ENTRADA.FECHADO = 'C'`** ou **`ENTRADA.LOTEENT = 'INAT'`**. As duas condições de exclusão são
+>   **independentes** — o movimento é excluído se satisfizer **qualquer uma** delas. **Não** se
+>   transportam automaticamente para a Produção Médica outras condições da regra de Atendimentos (RN-07).
+> - **V-06 — campo temporal:** o período do indicador usa **`ENTRADA.DATAHORAENT`** como campo de
+>   referência, preservando a convenção de intervalo **semiaberto**
+>   (`DATAHORAENT >= DataInicial AND DATAHORAENT < LimiteExclusivoFinal`); a definição do limite exclusivo
+>   respeita a granularidade e os contratos existentes.
+>
+> Esta Nota **não altera** a redação das **RN-14, RN-16, RN-34, RN-35 e RN-36** (preservadas). A
+> **aplicação técnica** das condições de V-02 e a **verificação** de V-06 **ainda não foram implementadas
+> nem validadas**; evidências e lacunas em aberto no **contrato de dados §9.7/§9.8** e no `PLAN-001`
+> (T-12). O tratamento de `CODMEDICO` nulo/vazio **não** é presumido como produção atribuída.
+
 ### Indicador — Despesas
 
 - **RN-37:** O indicador de Despesas mostra as **despesas fixas** do período selecionado. Composição registrada (T-02): **energia, água, aluguel, condomínio, salários** e **repasses médicos com datas de vencimento previstas em contrato**.
@@ -450,6 +485,8 @@ Referência: `docs/architecture/proposta-arquitetural.md` (ADR-001, ADR-003 revi
 | 2026-09-18 | 2.1 | Agente IA + gate humana | **Fechamento técnico T-08** (ambiente CASAMATER): fonte canônica `ENTRADA` + `CADCONVENIO.MODOFAT` (RN-07/08/09/26); contagem `Fechado <> 'C' AND LoteEnt <> 'INAT'`; tipo por `TIPO` (mapeamento 1–6, resto → "Não classificado"); cobertura por `MODOFAT` (C/P/S, vazio→"Não classificado"); P15/P18 e Q2/Q10 pendências técnicas resolvidas — ver Nota em §16 |
 | 2026-10-13 | 2.2 | Agente IA + gate humana | **Fechamento documental T-09**: decisão de negócio registrada — no indicador de **Consultas**, os registros classificados como **Retorno** (`TIPO='2'`) **não integram a contagem** (apenas Consulta `TIPO='1'`); **RN-28 preservada**; ver Nota na seção "Indicador — Consultas" e `REVIEW-T-09-2026-10-13.md` (R-02) |
 | 2026-10-13 | 2.3 | Agente IA + gate humana | **Fechamento documental T-10**: decisão de produto registrada — no indicador de **Exames**, o MVP contempla a **quantidade total** no período; a **distribuição por tipo/grupo** da RN-29 fica **adiada para evolução pós-MVP** (não implementada, não cancelada); **RN-29 preservada**; ver Nota na seção "Indicador — Exames" e `REVIEW-T-10-2026-10-13.md` (R-02) |
+| 2026-10-13 | 2.4 | Agente IA + gate humana | **Fechamento documental T-12**: decisões funcionais registradas para a **Produção Médica** — P29 unidade = **quantidade de movimentos válidos**; P28 ativo = **≥1 movimento válido no período** (operacional, restrito ao indicador); P30 atribuição = **`ENTRADA.CODMEDICO`** (sem somar `MEDRESP`/`CODANEST`); **RN-14/RN-16/RN-34/RN-35/RN-36 preservadas**; validações técnicas pendentes (V-01..V-07) no contrato §9.7 e no PLAN-001 (T-12) |
+| 2026-10-13 | 2.5 | Agente IA + gate humana | **Fechamento documental T-12 (Bloco A)**: decisões funcionais registradas — **V-02** critério de movimento válido = excluir `ENTRADA.FECHADO='C'` **ou** `ENTRADA.LOTEENT='INAT'` (condições independentes, sem transportar outras condições da RN-07); **V-06** campo temporal = **`ENTRADA.DATAHORAENT`** em intervalo semiaberto; **RN-14/RN-16/RN-34/RN-35/RN-36 preservadas** e Nota P28/P29/P30 preservada; evidências das Queries A/B e lacunas no contrato §9.7/§9.8 e no PLAN-001 (T-12); V-01/V-03/V-04/V-05/V-07 seguem abertas |
 
 ## Apêndice B — RNs e CAs arquivados (backlog — fora do MVP)
 
