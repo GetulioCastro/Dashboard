@@ -495,11 +495,24 @@ Implementar a consulta de Consultas conforme o contrato de dados (T-03). A query
 >   `montar_visao_identifica_consultas_e_preenche_dias_sem_consulta_com_zero`), mas **validação
 >   runtime end-to-end de período vazio não está registrada** em documento próprio.
 
+> **Decisão humana (2026-10-13) — Retornos no indicador de Consultas:** formalizado que os atendimentos
+> classificados como **Retorno (`TIPO='2'`) são excluídos** da contagem do indicador de Consultas
+> (conta-se apenas os registros de **Consulta**, `TIPO='1'`). A decisão **confirma** o comportamento já
+> implementado (`ConsultasVisaoRepository`, `E.TIPO = '1'`) e resolve, em nível documental, o finding
+> **R-02** de `REVIEW-T-09-2026-10-13.md`; registrada na seção "Indicador — Consultas" do PRD-001
+> (Nota T-09/2026-10-13, v2.2). **RN-28 preservada.**
+>
+> **Review:** `docs/reviews/REVIEW-T-09-2026-10-13.md` — **⚠️ Aprovado com ressalvas** (round 1;
+> 0 Bloqueante / 3 Importante / 4 Sugestão). **R-01** (escopo implementado > declarado) sob acompanhamento
+> documental; **R-02** resolvido por decisão humana; **R-03** (estado vazio × RN-03/CA-09) **permanece
+> PENDENTE — pendência funcional conhecida, não resolvida** (ver critério de aceite 4 abaixo); R-04..R-07
+> são sugestões não bloqueantes.
+
 **Critério de aceite (testável):**
 - [x] Query retorna quantidade de consultas no período (RN-28), distinguindo primeira consulta/retorno quando definido
 - [x] Filtro por cobertura funciona (RN-26)
 - [x] Relação com Atendimento segue o contrato do novo modelo (RN-30)
-- [ ] Período sem registros retorna estado vazio (CA-09) — *código + teste unitário presentes; validação de runtime não registrada (ver registro acima)*
+- [ ] Período sem registros retorna estado vazio (CA-09) — *código + teste unitário presentes; validação de runtime não registrada (ver registro acima)* — **pendência funcional conhecida: R-03 em `REVIEW-T-09-2026-10-13.md` (PENDENTE, não resolvido)**
 
 **Testes a escrever:**
 - *Integration:* `CA_11_consultas_no_periodo_retorna_quantidade`
@@ -546,11 +559,30 @@ Implementar a consulta de Exames conforme o contrato de dados (T-03), contando o
 >   `montar_visao_identifica_exames_e_preenche_dias_sem_exame_com_zero`), mas **validação
 >   runtime end-to-end de período vazio não está registrada** em documento próprio.
 
+> **Decisão humana (2026-10-13) — distribuição por tipo/grupo da RN-29:** formalizado que o MVP do
+> DashboardSB contempla **exclusivamente a quantidade total de Exames** realizados no período
+> (comportamento já implementado em `ExamesVisaoRepository`, `E.TIPO = '3'`). A **distribuição por
+> tipo/grupo** prevista condicionalmente na RN-29 fica **ADIADA para uma evolução posterior ao MVP** —
+> **não foi implementada** e **não deve ser declarada como entregue**. A **RN-29 permanece vigente e
+> preservada**; o requisito **não é cancelado**, apenas tem a quebra por tipo/grupo postergada. A
+> responsabilidade **não** é transferida automaticamente para T-16, T-17 ou qualquer tarefa existente;
+> a distribuição futura **ainda não possui tarefa específica** no PLAN-001 (registrada como lacuna de
+> planejamento). Formalizada na seção "Indicador — Exames" do PRD-001 (Nota T-10/2026-10-13, v2.3).
+>
+> **Review:** `docs/reviews/REVIEW-T-10-2026-10-13.md` — **⚠️ Aprovado com ressalvas** (round 1;
+> 0 Bloqueante / 4 Importante / 4 Sugestão). **R-01** (asserção `exames ≤ consultas` no teste
+> `CA_12_exames_nao_excede_consultas_no_mesmo_periodo`) **permanece PENDÊNCIA TÉCNICA ABERTA** —
+> premissa não sustentada pelo contrato de dados; teste **não** executado nem alterado nesta rodada;
+> **R-02** (RN-29 sem quebra por tipo/grupo) **resolvido documentalmente** pela decisão acima;
+> **R-03** (estado vazio × RN-03/CA-09) **permanece PENDÊNCIA FUNCIONAL ABERTA** — correção e validação
+> pendentes; **R-04** (escopo implementado > declarado) **sob acompanhamento documental** — a lista
+> `Camadas/arquivos afetados` **não** foi reescrita; R-05..R-08 são **sugestões não bloqueantes**.
+
 **Critério de aceite (testável):**
-- [x] Query retorna quantidade de exames no período (RN-29), por tipo/grupo quando aplicável
+- [x] Query retorna quantidade de exames no período (RN-29), por tipo/grupo quando aplicável — **nota 2026-10-13:** o MVP contempla apenas o **total**; a quebra por tipo/grupo foi **adiada** (R-02 resolvido documentalmente — ver decisão acima)
 - [x] Filtro por cobertura funciona (RN-26)
 - [x] Relação com Atendimento segue o contrato do novo modelo (RN-30)
-- [ ] Período sem registros retorna estado vazio (CA-09) — *código + teste unitário presentes; validação de runtime não registrada (ver registro acima)*
+- [ ] Período sem registros retorna estado vazio (CA-09) — *código + teste unitário presentes; validação de runtime não registrada (ver registro acima)*; **pendência funcional aberta (R-03)**
 
 **Testes a escrever:**
 - *Integration:* `CA_12_exames_no_periodo_retorna_quantidade`
@@ -882,7 +914,7 @@ Criar o partial `_IndicatorCard` reutilizável e renderizar os cards de Atendime
 **Critério de aceite (testável):**
 - [ ] Cards dos três assistenciais exibem a quantidade do período selecionado (CA-03, CA-11, CA-12)
 - [ ] Partial `_IndicatorCard` é reutilizável (título, valor, período, unidade)
-- [ ] Cards exibem a categoria de cobertura selecionada (RN-26)
+- [ ] Cards exibem a categoria de cobertura selecionada (RN-26) — *critério **realocado para a T-17** por decisão humana de 2026-10-13 (RN-26 preservada integralmente; T-14 permanece Concluída).*
 - [ ] Cards comportam estado vazio (CA-09) e erro (CA-10)
 
 **Testes a escrever:**
@@ -976,7 +1008,7 @@ entrega.
 **Critérios de aceite:**
 - [x] Cards dos três assistenciais exibem a quantidade do período selecionado (CA-03, CA-11, CA-12) — validado em runtime (2026-10-07); valor + mini-gráfico real + período (2026-10-08)
 - [ ] Partial `_IndicatorCard` é reutilizável (título, valor, período, unidade) — **DISPENSADO por decisão humana (08/10/2026)**; estrutura de cards reutilizada em `Index.cshtml`; não entregue, não bloqueante
-- [ ] Cards exibem a categoria de cobertura selecionada (RN-26) — sem registro de validação neste fechamento
+- [ ] Cards exibem a categoria de cobertura selecionada (RN-26) — sem registro de validação neste fechamento; **REALOCADO para a T-17 por decisão humana de 2026-10-13** — a responsabilidade de implementação e validação da categoria de cobertura na Home passa à T-17. RN-26 **preservada integralmente**; T-14 permanece **Concluída**. Ver `REVIEW-T-14-2026-10-13` (R-01).
 - [x] Cards comportam estado vazio (CA-09) e erro (CA-10) — estados real / zero / indisponível tratados e validados em runtime (2026-10-07 e 2026-10-08)
 
 ---
@@ -1056,6 +1088,13 @@ Implementar a renderização de gráficos para os indicadores com escolha de for
 
 **Descrição:**
 Implementar o mecanismo **uniforme** de filtro (RN-42): período **atual** (padrão: mês corrente — RN-04), **passado** e **futuro**, ambos com data inicial e data final (CA-15). Adicionar a seleção de **categoria de cobertura** (Particular/Convênio/SUS — RN-26; SUS somente quando o serviço atender SUS). Ao trocar o filtro, todos os cards/gráficos recarregam (CA-02, CA-18). A lista de convênios vem do contrato de dados (T-03) — não é inventada. **Unidade como filtro é evolução futura (RN-45) — fora do MVP.**
+
+> **Responsabilidade realocada da T-14 (decisão humana de 2026-10-13):** a T-17 passa a ser
+> responsável pelo critério "cards exibem a categoria de cobertura selecionada (RN-26)",
+> originalmente previsto na T-14 — implementação **e** validação na Home. A RN-26 permanece
+> **integralmente vigente** (não eliminada, reduzida nem modificada), e já é contemplada em
+> `Implementa: RN-26` desta tarefa. A T-14 permanece **Concluída**. Este registro **não inicia**
+> a T-17 — `Status: Pendente` inalterado. Ver `REVIEW-T-14-2026-10-13` (R-01).
 
 **Critério de aceite (testável):**
 - [ ] Período padrão é o mês corrente (RN-04)

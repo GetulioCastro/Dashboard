@@ -26,6 +26,9 @@
 | Plano | PLAN-002 (T-01..T-08) — Análise por Convênio | **ENCERRADO (2026-10-06)** — T-01..T-08 concluídas, build 0/0, 72/72 testes, P19 reconciliado, UI integrada, **gate humano visual aprovado (2026-10-06)**; sem pendência funcional aberta; evolução gráfica não iniciada *(afirmação correta em 2026-10-06; a evolução gráfica foi executada depois, em 2026-10-07 — ver linha seguinte)* |
 | Plano | PLAN-003 (P3-T01..P3-T05) — Visualização Gráfica por Convênio | **ENCERRADO (2026-10-07)** — registro retroativo; gráfico horizontal SVG em Atendimentos, Consultas e Exames; responsividade validada (DevTools mobile); build 0/0, 72/72 testes, validações humanas concluídas; commits `0038c54`, `6619782`, `2c62fae`, `e9a3917` |
 | Revisão | REVIEW-T-08-2026-09-18 | Aprovado com ressalvas |
+| Revisão | REVIEW-T-14-2026-10-13 | Aprovado com ressalvas — R-01 resolvido por decisão humana (realocação para T-17, 2026-10-13; §3.6) |
+| Revisão | REVIEW-T-09-2026-10-13 | Aprovado com ressalvas (round 1 — 0 Bloqueante / 3 Importante / 4 Sugestão) — decisão humana (2026-10-13): Retornos (`TIPO='2'`) excluídos do indicador de Consultas; R-02 resolvido documentalmente; R-01 sob acompanhamento documental; R-03 pendente (não resolvido); R-04..R-07 sugestões não bloqueantes |
+| Revisão | REVIEW-T-10-2026-10-13 | Aprovado com ressalvas (round 1 — 0 Bloqueante / 4 Importante / 4 Sugestão) — decisão humana (2026-10-13): distribuição de Exames **por tipo/grupo** (`RN-29`) **adiada para pós-MVP** (só o total vigora); **R-02 resolvido documentalmente**; **R-01 aberto** (pendência técnica); **R-03 aberto** (pendência funcional — estado vazio × RN-03/CA-09); **R-04 sob acompanhamento documental**; R-05..R-08 sugestões não bloqueantes; **T-10 permanece Concluída** (§3.7) |
 
 > **Nota de reconciliação (2026-10-02):** Reconciliação documental do estado do workflow realizada sem alterar documentos históricos.
 
@@ -34,11 +37,11 @@
 |---|---|---|
 | T-01..T-07 | Concluído | — |
 | **T-08** | **Implementado e Validado (reconciliado 2026-10-02)** | Integrados CA-03/CA-09/CA-18 (estado reconciliado 2026-10-02) |
-| **T-09, T-10** | **Concluído (reconciliado 2026-10-07)** | Entregas já existentes no código (`ConsultasVisaoRepository`/`ExamesVisaoRepository`, commits `9ab8f9c`/`f43aac0`) — PLAN-001 atualizado por reconciliação documental, sem reescrita de histórico; CA-09 com lacuna de validação declarada |
+| **T-09, T-10** | **Concluído (reconciliado 2026-10-07)** | Entregas já existentes no código (`ConsultasVisaoRepository`/`ExamesVisaoRepository`, commits `9ab8f9c`/`f43aac0`) — PLAN-001 atualizado por reconciliação documental, sem reescrita de histórico; CA-09 com lacuna de validação declarada. **T-09: review `REVIEW-T-09-2026-10-13` — Aprovado com ressalvas (round 1)**; decisão humana 2026-10-13 (Retornos `TIPO='2'` excluídos do indicador de Consultas; R-02 resolvido documentalmente); **R-01** (escopo implementado > declarado) sob acompanhamento; **R-03** (estado vazio × RN-03/CA-09) **pendente de correção e validação — não resolvido**; R-04..R-07 sugestões não bloqueantes. **T-10: review `REVIEW-T-10-2026-10-13` — Aprovado com ressalvas (round 1)**; decisão humana 2026-10-13 (distribuição de Exames **por tipo/grupo** — RN-29 — **adiada para pós-MVP**; só o **total** vigora; R-02 resolvido documentalmente); **R-01** (asserção `exames ≤ consultas`) **aberto** (pendência técnica); **R-03** (estado vazio × RN-03/CA-09) **aberto** (pendência funcional); **R-04** (escopo > declarado) sob acompanhamento documental; R-05..R-08 sugestões não bloqueantes — ver §3.7 |
 | **T-11** | **Parcialmente concluída (2026-10-09)** — regras fechadas (2026-10-09, §3.4.1) e **T-11A (faturamento realizado = `FECHADO IN ('F','E')`) implementada, validada e commitada** (`6061aba`) | **"A Faturar" pendente de definição funcional** — ver §3.4.2 e PLAN-001 T-11 |
 | **T-13** | **Pendente — diagnóstico de ponte de dados concluído (2026-10-09)** | Metadados e cardinalidade `PAGAR`×`PAGARC` comprovados (K5 = 1:1); implementação **não iniciada**; pendências humanas de classificação/data abertas — ver §3.5 e PLAN-001 T-13 |
 | T-12, T-19 | Pendente | Elegíveis por dependência — ver §6, tensão objeto de reconciliação documental em 2026-10-02 |
-| **T-14** | **Concluído** (entrega e validação 2026-10-07; extensão de mini-gráficos reais 2026-10-08; fechamento documental 2026-10-08) | — (registros em §3.3 e §3.3.1) |
+| **T-14** | **Concluído** (entrega e validação 2026-10-07; extensão de mini-gráficos reais 2026-10-08; fechamento documental 2026-10-08) | — (registros em §3.3 e §3.3.1). **Review `REVIEW-T-14-2026-10-13` — Aprovado com ressalvas**; critério 3 (cobertura — RN-26) **realocado à T-17** por decisão humana de 2026-10-13 (§3.6) |
 | T-15..T-18, T-20, T-21 | Pendente | Bloqueadas |
 
 ### 3.1 — PLAN-002 (Análise por Convênio) — registro aditivo (2026-10-05)
@@ -363,6 +366,63 @@ cancelamento/estorno; levar ao gate humano; só então discutir o repositório d
 
 **Nesta rodada:** nenhuma query de dados executada no fechamento; nenhum código, build, DI, Home ou
 Git write; somente os 2 documentos de status/planejamento alterados.
+
+### 3.6 — PLAN-001 / T-14 — review e realocação do critério RN-26 (aditivo, 2026-10-13)
+
+Registro **aditivo** do review da **T-14** e da **decisão humana de 2026-10-13** que **realoca** o
+critério de cobertura (RN-26) da **T-14** para a **T-17**. Não altera o conteúdo das seções
+anteriores; a §3.3 permanece como estado anterior.
+
+- **Review emitido:** `docs/reviews/REVIEW-T-14-2026-10-13.md` — recomendação final **Aprovado com
+  ressalvas** (0 Bloqueante, 1 Importante, 3 Sugestões). Finding **R-01** (`REVIEW-T-14-2026-10-13`):
+  o critério de aceite 3 da T-14 ("cards exibem a categoria de cobertura — RN-26") estava em aberto
+  sem dispensa formal.
+- **Decisão humana (2026-10-13):** o critério de aceite 3 da T-14 (categoria de cobertura, RN-26)
+  foi **formalmente realocado para a T-17** — implementação **e** validação na Home. A **RN-26 não é
+  eliminada, reduzida nem modificada**; apenas muda a tarefa responsável por materializá-la.
+- **T-14:** permanece **CONCLUÍDA**; review **Aprovado com ressalvas**. Nenhum outro critério ou
+  validação alterado.
+- **T-17:** passa a ser **responsável** pelo critério originalmente previsto na T-14 (categoria de
+  cobertura — RN-26), já contemplado em `Implementa: RN-26` e no escopo de filtros de cobertura.
+  **T-17 permanece `Pendente` — não iniciada**.
+- **R-01:** **RESOLVIDO POR DECISÃO HUMANA — REALOCAÇÃO PARA T-17** (resolvido documentalmente); a
+  **implementação e a validação permanecem pendentes** e serão realizadas na **T-17**.
+
+**Nesta rodada:** alterações somente documentais — `PLAN-001`, `REVIEW-T-14-2026-10-13` e este
+`STATUS-002`; nenhum código, teste, build, SQL, banco, commit ou push; nenhum estado de outra
+tarefa alterado.
+
+### 3.7 — PLAN-001 / T-10 — review e decisão sobre RN-29 (aditivo, 2026-10-13)
+
+Registro **aditivo** do review da **T-10** e da **decisão humana de 2026-10-13** que formaliza o
+**adiamento** da distribuição de Exames por tipo/grupo. Não altera o conteúdo das seções anteriores;
+a linha T-09/T-10 da §3 permanece como estado anterior, ampliada nesta data.
+
+- **Review emitido:** `docs/reviews/REVIEW-T-10-2026-10-13.md` — recomendação final **Aprovado com
+  ressalvas** (round 1; 0 Bloqueante / 4 Importante / 4 Sugestão).
+- **Decisão humana (2026-10-13):** a **distribuição de Exames por tipo/grupo** (cláusula condicional
+  da **RN-29**) fica **ADIADA para uma evolução posterior ao MVP**. No MVP, a T-10 permanece
+  responsável pela **contagem total** de Exames realizados no período, conforme implementação
+  existente (`E.TIPO = '3'`). A distribuição **não foi implementada** e **não deve ser declarada como
+  entregue**. A **RN-29 permanece vigente e preservada** — o requisito **não é cancelado**.
+- **Responsabilidade:** **não** foi transferida automaticamente para T-16, T-17 ou qualquer tarefa
+  existente; a distribuição futura **ainda não possui tarefa específica** no PLAN-001 (lacuna de
+  planejamento registrada).
+- **R-02:** **RESOLVIDO DOCUMENTALMENTE** por decisão humana (adiamento pós-MVP).
+- **R-01** (asserção `exames ≤ consultas` no teste `CA_12_exames_nao_excede_consultas_no_mesmo_periodo`):
+  **ABERTO — pendência técnica** (premissa não sustentada pelo contrato de dados; teste não executado
+  nem alterado).
+- **R-03** (estado vazio de Exames × RN-03/CA-09): **ABERTO — pendência funcional** (correção e
+  validação pendentes).
+- **R-04** (escopo implementado > declarado): **sob acompanhamento documental** — arquivos efetivamente
+  envolvidos registrados no review; lista `Camadas/arquivos afetados` **não** reescrita.
+- **R-05 a R-08:** **sugestões não bloqueantes**.
+- **T-10:** permanece **CONCLUÍDA**; review **Aprovado com ressalvas**. Formalização no PRD-001
+  (Nota T-10/2026-10-13, v2.3) e no PLAN-001 (T-10).
+
+**Nesta rodada:** alterações somente documentais — `PRD-001`, `PLAN-001`, `REVIEW-T-10-2026-10-13` e
+este `STATUS-002`; nenhum código, teste, build, SQL, banco, commit ou push; nenhum estado de outra
+tarefa alterado (T-11, T-12, T-13, T-16, T-17, T-19 não tocadas).
 
 ## 4. R-05 — pendência aberta (bloqueio externo)
 

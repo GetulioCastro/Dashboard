@@ -168,10 +168,26 @@ flowchart TD
 - **RN-28:** O indicador de Consultas mostra a quantidade de consultas realizadas no período selecionado. **Consulta** é o atendimento realizado pelo profissional de saúde a um paciente. **Retorno** é a consulta associada a uma consulta anterior, podendo ter sido previamente agendada ou não, desde que ocorra dentro do prazo de **até 30 dias** contados da data da consulta. Consulta e Retorno são **conceitos distintos** para o negócio; a forma técnica de identificá-los no banco do SisacHTML5 será confirmada no T-03 (não se assume código específico) (decidido em T-02 — 2026-09-17).
 - **RN-30:** A relação entre Atendimento, Consulta e Exame será definida pelo **modelo de dados do novo SisacHTML5** (categorias de atendimento e/ou itens) e validada antes da implementação — **não** se presume hierarquia ou filiação.
 
+> **Nota (decisão de produto T-09 — 13/10/2026):** para o indicador de **Consultas**, os atendimentos
+> classificados como **Retorno** (`TIPO='2'`) **não integram a contagem**; o indicador conta somente os
+> registros classificados como **Consulta** (`TIPO='1'`). Esta é uma decisão de **negócio**, tomada em
+> gate humana no fechamento documental da **T-09**, e **não altera** a redação da **RN-28** (que permanece
+> descrevendo Consulta e Retorno como conceitos distintos). A materialização técnica é o filtro
+> `E.TIPO = '1'` — vide `REVIEW-T-09-2026-10-13.md` (finding R-02) e `docs/plans/PLAN-001-dashboard-indicadores.md` (T-09).
+
 ### Indicador — Exames
 
 - **RN-29:** O indicador de Exames mostra a quantidade de exames realizados no período selecionado, por tipo/grupo quando aplicável.
 - **RN-30:** aplicável (ver Consultas).
+
+> **Nota (decisão de produto T-10 — 13/10/2026):** para o indicador de **Exames**, o **MVP contempla a
+> quantidade total** de exames realizados no período selecionado. A **distribuição por tipo/grupo**
+> prevista na RN-29 (cláusula "quando aplicável") fica **adiada para uma evolução posterior ao MVP** —
+> **não foi implementada** e **não deve ser declarada como entregue**. A **RN-29 permanece vigente e
+> preservada** em sua redação original; o requisito **não é cancelado**, apenas tem a quebra por
+> tipo/grupo postergada. Nenhuma tarefa específica do `PLAN-001` foi criada para essa distribuição —
+> a responsabilidade **não** foi transferida para outra tarefa existente. Vide
+> `REVIEW-T-10-2026-10-13.md` (finding R-02) e `docs/plans/PLAN-001-dashboard-indicadores.md` (T-10).
 
 ### Indicador — Faturamento
 
@@ -432,6 +448,8 @@ Referência: `docs/architecture/proposta-arquitetural.md` (ADR-001, ADR-003 revi
 | 2026-09-16 | 1.0 | Agente IA + gate humana | **Gate de negócio aprovada**: fonte única = banco do novo SisacHTML5 (ADR-008); MVP com 6 indicadores implementáveis (Atendimentos, Consultas, Exames, Faturamento, Produção Médica, Despesas); Repasses em roadmap; Unidade futura; coberturas Particular/Convênio/SUS; gráficos configuráveis; períodos atual/passado/futuro; tratamento de consultas lentas; homologação com histórico 2025+ |
 | 2026-09-17 | 2.0 | Agente IA + gate humana | **Fechamento documental T-02**: decisões de negócio registradas (Produtividade Médica — RN-16; Conta a faturar e fluxo — RN-31/RN-33; composição de Despesas — RN-37/RN-38 e nota de repasse médico; Consulta × Retorno ≤ 30 dias — RN-28; Período atual/futuro — RN-04); **premissa de banco** registrada (SisacHTML5 ≈ SghProg — ADR-008); questões Q2–Q6 e Q10 marcadas como "negócio decidida"; **identificação técnica remetida ao T-03** |
 | 2026-09-18 | 2.1 | Agente IA + gate humana | **Fechamento técnico T-08** (ambiente CASAMATER): fonte canônica `ENTRADA` + `CADCONVENIO.MODOFAT` (RN-07/08/09/26); contagem `Fechado <> 'C' AND LoteEnt <> 'INAT'`; tipo por `TIPO` (mapeamento 1–6, resto → "Não classificado"); cobertura por `MODOFAT` (C/P/S, vazio→"Não classificado"); P15/P18 e Q2/Q10 pendências técnicas resolvidas — ver Nota em §16 |
+| 2026-10-13 | 2.2 | Agente IA + gate humana | **Fechamento documental T-09**: decisão de negócio registrada — no indicador de **Consultas**, os registros classificados como **Retorno** (`TIPO='2'`) **não integram a contagem** (apenas Consulta `TIPO='1'`); **RN-28 preservada**; ver Nota na seção "Indicador — Consultas" e `REVIEW-T-09-2026-10-13.md` (R-02) |
+| 2026-10-13 | 2.3 | Agente IA + gate humana | **Fechamento documental T-10**: decisão de produto registrada — no indicador de **Exames**, o MVP contempla a **quantidade total** no período; a **distribuição por tipo/grupo** da RN-29 fica **adiada para evolução pós-MVP** (não implementada, não cancelada); **RN-29 preservada**; ver Nota na seção "Indicador — Exames" e `REVIEW-T-10-2026-10-13.md` (R-02) |
 
 ## Apêndice B — RNs e CAs arquivados (backlog — fora do MVP)
 
